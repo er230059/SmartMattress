@@ -1,0 +1,19 @@
+{
+	"name": "NCUT-EE-E434-SmartMattress",
+	"version": "0.0.1",
+	"description": "SmartMattress application layer system",
+	"engines" : { "node" : ">=0.10 <0.12" },
+	"dependencies": {
+		"express": "*",
+		"socket.io": "*",
+		"async": "*",
+		"i2c": "*"
+	},
+	"main": "app.js",
+	"author": [
+		{
+			"name": "Lang-Chuan Huang",
+			"email": "er230059@gmail.com"
+		}
+	]
+}
