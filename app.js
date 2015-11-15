@@ -116,5 +116,7 @@ setInterval(function () {
             io.emit('update', JSON.stringify(responseData));
             callback(null);
         }
-    ]);
+    ],function(err){
+    	if(err) console.log(err);
+	});
 }, 200)
