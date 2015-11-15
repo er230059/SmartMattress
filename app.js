@@ -117,4 +117,4 @@ setInterval(function () {
             callback(null);
         }
     ]);
-}, 300)
+}, 200)
