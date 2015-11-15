@@ -21,8 +21,8 @@ http.listen(80, function () {
     console.log('server listening on port 80');
 });
 
-function formatData (ID, res) {
-    var json = {id:ID, data:[], status:[]};
+function formatData (id, res) {
+    var json = {'id':id, 'data':[], 'status':[]};
     if(res[6].toString(16) != '78' || res[7].toString(16) != '48') {
         return null;
     }
