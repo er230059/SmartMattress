@@ -1,7 +1,8 @@
-var app = require('express')();
+var express = require('express');
+var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-var async = require('async');;
+var async = require('async');
 var i2c = require('i2c');
 var device30 = new i2c(0x30, {device: '/dev/i2c-1'});
 var device31 = new i2c(0x31, {device: '/dev/i2c-1'});
@@ -12,6 +13,8 @@ app.use(function (req, res, next) {
     console.log(ip + ': '+ req.url);
     next();
 });
+
+app.use(express.static('static'));
 
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/static/index.html');

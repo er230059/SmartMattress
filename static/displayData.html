@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+		body {font-family: "Lucida Console", Monaco, monospace;}
+		</style>
+		<title>Display Electrodes Data</title>
+	</head>
+	<body>
+		<a href="/">homepage</a><br><br>
+		<script src="/socket.io/socket.io.js"></script>
+		<script type="text/javascript">
+			for(var i = 0; i < 20; i++) {
+				for(var j = 0; j < 16; j++) {
+					var id0 = ((i % 4) * 8) + (j % 8);
+					var id1 = (Math.floor(i / 4) * 2 + Math.floor(j / 8));
+					if(id0.toString().length == 1) {
+						id0 = "0" + id0;
+					}
+					var id = id1.toString() + id0.toString();
+					document.write("<span id=\"" + id + "\">0x1234</span>&nbsp");
+
+					if(j == 7) {
+						document.write("&nbsp&nbsp&nbsp&nbsp");
+					}
+				}
+				document.write("<br>");
+				if((i - 3) % 4 == 0) {
+					document.write("<br><br>");
+				}
+			}
+
+			var socket = io();
+			socket.on('update', function (data) {
+				var json = JSON.parse(data);
+				for(var i = 0; i < json.length; i++) {
+					for(var j = 0; j < json[i]['data'].length; j++) {
+						var id = json[i]['id'].toString() + (('0' + j.toString()).slice(-2));
+						document.getElementById(id).innerHTML = json[i]['data'][j];
+						document.getElementById(id).style.backgroundColor = ((json[i]['status'][j] == 1) ? "orange" : "white");
+					}
+
+				}
+    		});
+		</script>
+	</body>
+</html>

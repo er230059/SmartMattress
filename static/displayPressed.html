@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+		canvas {pointer-events: none;}
+		</style>
+		<title>Number of Electrodes Pressed</title>
+	</head>
+	<body>
+		<a href="/">homepage</a><br><br>
+		<canvas id="canvas" height="100" width="250"></canvas>
+		<script src="/js/Chart.js"></script>
+		<script>
+			var randomData = function(){ return Math.round(Math.random() * 320)};
+			var time = 20;
+			var l = [], d = [];
+			for (var i = 0; i <= 20; i+= 0.5) {
+				l.push(i.toString() + 's');
+				d.push(0);
+			}
+			var lineChartData = {
+				labels : l,
+				datasets : [
+					{
+						label: "dataset",
+						fillColor : "rgba(120,150,200,0.2)",
+						strokeColor : "rgba(120,150,200,1)",
+						pointColor : "rgba(120,150,200,1)",
+						pointStrokeColor : "#fff",
+						pointHighlightFill : "#fff",
+						pointHighlightStroke : "rgba(220,220,220,1)",
+						data : d
+					}
+				]
+
+			}
+
+		window.onload = function(){
+			var ctx = document.getElementById("canvas").getContext("2d");
+			var options = {
+				animation : false,
+				responsive: true,
+				scaleOverride : true,
+				scaleSteps : 32,
+				scaleStepWidth : 10,
+				scaleStartValue : 0
+			};
+			var myChart = new Chart(ctx)
+			myChart.Line(lineChartData, options);
+			setInterval(function () {
+				time += 0.5;
+				lineChartData.labels.push(time.toString() + 's');
+				lineChartData.datasets[0].data.push(randomData());
+				lineChartData.labels.shift();
+				lineChartData.datasets[0].data.shift();
+				myChart.Line(lineChartData, options);
+			}, 250);
+		}
+		</script>
+	</body>
+</html>
