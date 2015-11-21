@@ -7,35 +7,58 @@
 		<title>Number of Electrodes Pressed</title>
 	</head>
 	<body>
-		<a href="/">homepage</a><br><br>
-		<canvas id="canvas" height="100" width="250"></canvas>
+		<a href="/">Homepage</a><br><br>
+		<canvas id="canvas" height="600" width="1800"></canvas><br>
+		Select refresh rate (x-axis TIME/DIV):
+		<select onchange="onRateUpdate(this)">
+		  <option value="100">100ms</option>
+		  <option value="200">200ms</option>
+		  <option value="500">500ms</option>
+		  <option value="1000">1s</option>
+		  <option value="2000">2s</option>
+		  <option value="5000">5s</option>
+		</select>
+		<br>
+		Select a sensor to display:
+		<select onchange="onIdUpdate(this)">
+		  <option value="0">1</option>
+		  <option value="1">2</option>
+		  <option value="2">3</option>
+		  <option value="3">4</option>
+		  <option value="4">5</option>
+		  <option value="5">6</option>
+		  <option value="6">7</option>
+		  <option value="7">8</option>
+		  <option value="8">9</option>
+		  <option value="9">10</option>
+		</select>
+		<script src="/socket.io/socket.io.js"></script>
 		<script src="/js/Chart.js"></script>
 		<script>
-			var randomData = function(){ return Math.round(Math.random() * 320)};
-			var time = 20;
-			var l = [], d = [];
-			for (var i = 0; i <= 20; i+= 0.5) {
-				l.push(i.toString() + 's');
-				d.push(0);
-			}
+			var nPressed = 0;
+			var id = 0;
+
 			var lineChartData = {
-				labels : l,
+				labels : [],
 				datasets : [
 					{
 						label: "dataset",
-						fillColor : "rgba(120,150,200,0.2)",
-						strokeColor : "rgba(120,150,200,1)",
-						pointColor : "rgba(120,150,200,1)",
+						fillColor : "rgba(100,120,180,0.2)",
+						strokeColor : "rgba(100,120,180,1)",
+						pointColor : "rgba(100,120,180,1)",
 						pointStrokeColor : "#fff",
 						pointHighlightFill : "#fff",
 						pointHighlightStroke : "rgba(220,220,220,1)",
-						data : d
+						data : []
 					}
 				]
 
 			}
+			for (var i = 0; i <= 100; i++) {
+				lineChartData.labels.push('');
+				lineChartData.datasets[0].data.push(0);
+			}
 
-		window.onload = function(){
 			var ctx = document.getElementById("canvas").getContext("2d");
 			var options = {
 				animation : false,
@@ -47,15 +70,41 @@
 			};
 			var myChart = new Chart(ctx)
 			myChart.Line(lineChartData, options);
-			setInterval(function () {
-				time += 0.5;
-				lineChartData.labels.push(time.toString() + 's');
-				lineChartData.datasets[0].data.push(randomData());
-				lineChartData.labels.shift();
+
+			function updateChart() {
+				lineChartData.datasets[0].data.push(nPressed);
 				lineChartData.datasets[0].data.shift();
 				myChart.Line(lineChartData, options);
-			}, 250);
-		}
+			}
+			var timer = setInterval(updateChart, 100);
+
+			function onRateUpdate (element) {
+				clearInterval(timer);
+				for (var i = 0; i <= 100; i++) {
+					lineChartData.datasets[0].data[i] = 0;
+				}
+				myChart.Line(lineChartData, options);
+				timer = setInterval(updateChart, element.options[element.selectedIndex].value);
+			}
+
+			function onIdUpdate (element) {
+				id = element.selectedIndex;
+			}
+
+			var socket = io();
+			socket.on('update', function (data) {
+				var d = new Date();
+				var n = d.toTimeString();
+				var t = n.split(' ')[0].toString() + '.' + d.getMilliseconds().toString();
+				var count = 0;
+				var json = JSON.parse(data);
+				for(var i = 0; i < json[id]['data'].length; i++) {
+					if(json[id]['status'][j] == 1) {
+						count += 1;
+					}
+				}
+				nPressed = count;
+    		});
 		</script>
 	</body>
 </html>
