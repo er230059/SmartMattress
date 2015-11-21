@@ -18,25 +18,10 @@
 		  <option value="2000">2s</option>
 		  <option value="5000">5s</option>
 		</select>
-		<br>
-		Select a sensor to display:
-		<select onchange="onIdUpdate(this)">
-		  <option value="0">1</option>
-		  <option value="1">2</option>
-		  <option value="2">3</option>
-		  <option value="3">4</option>
-		  <option value="4">5</option>
-		  <option value="5">6</option>
-		  <option value="6">7</option>
-		  <option value="7">8</option>
-		  <option value="8">9</option>
-		  <option value="9">10</option>
-		</select>
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="/js/Chart.js"></script>
 		<script>
 			var nPressed = 0;
-			var id = 0;
 
 			var lineChartData = {
 				labels : [],
@@ -87,10 +72,6 @@
 				timer = setInterval(updateChart, element.options[element.selectedIndex].value);
 			}
 
-			function onIdUpdate (element) {
-				id = element.selectedIndex;
-			}
-
 			var socket = io();
 			socket.on('update', function (data) {
 				var d = new Date();
@@ -98,10 +79,13 @@
 				var t = n.split(' ')[0].toString() + '.' + d.getMilliseconds().toString();
 				var count = 0;
 				var json = JSON.parse(data);
-				for(var i = 0; i < json[id]['data'].length; i++) {
-					if(json[id]['status'][j] == 1) {
-						count += 1;
+				for(var i = 0; i < json.length; i++) {
+					for(var j = 0; j < json[i]['data'].length; j++) {
+						if(json[i]['status'][j] == 1) {
+							count += 1;
+						}
 					}
+
 				}
 				nPressed = count;
     		});
