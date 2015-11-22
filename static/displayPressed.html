@@ -2,15 +2,16 @@
 <html>
 	<head>
 		<style>
-		canvas {pointer-events: none;}
+			canvas {pointer-events: none;}
+			input {vertical-align:middle;}
 		</style>
 		<title>Number of Electrodes Pressed</title>
 	</head>
 	<body>
 		<a href="/">Homepage</a><br><br>
 		Show number of electrodes pressed(blue curve): <input type="checkbox" id="check0" onclick="onCheckUpdate(this)" checked><br>
-		Show change rate of electrodes pressed(green curve): <input type="checkbox" id="check1" onclick="onCheckUpdate(this)" checked><br>
-		Select refresh rate (x-axis TIME/DIV):
+		Show change rate of electrodes pressed(green curve): <input type="checkbox" id="check1" onclick="onCheckUpdate(this)" checked><br><br>
+		Adjust refresh rate (x-axis TIME/DIV):
 		<select onchange="onRateUpdate(this)">
 		  <option value="100">100ms</option>
 		  <option value="200">200ms</option>
@@ -18,7 +19,8 @@
 		  <option value="1000">1s</option>
 		  <option value="2000">2s</option>
 		  <option value="5000">5s</option>
-		</select><br><br>
+		</select><br>
+		Adjust y-axis range: <input type="range" id="range1" value="320" min="10" max="320" step="5" onchange="onRangeUpdate(this)"><br><br>
 		<canvas id="canvas1" height="600" width="1800"></canvas><br>
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="/js/Chart.js"></script>
@@ -84,6 +86,20 @@
 				nPressed = 0;
 				cnPressed = 0;
 				timer = setInterval(updateChart, element.options[element.selectedIndex].value);
+			}
+
+			function onRangeUpdate (element) {
+				if(element.value > 160) {
+					options.scaleSteps = Math.round(element.value / 10);
+					options.scaleStepWidth = 10;
+				} else if(element.value > 50) {
+					options.scaleSteps = Math.round(element.value / 5);
+					options.scaleStepWidth = 5;
+				} else {
+					options.scaleSteps = element.value;
+					options.scaleStepWidth = 1;
+				}
+				Chart1.Line(chartData, options);
 			}
 
 			function onCheckUpdate (element) {
