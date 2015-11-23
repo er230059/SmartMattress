@@ -25,7 +25,7 @@
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="/js/Chart.js"></script>
 		<script>
-			var nPressed = 0, cnPressed = 0;
+			var nPressed = 0, lnPressed = 0;
 
 			var chartData = {
 				labels : [],
@@ -68,6 +68,8 @@
 			Chart1.Line(chartData, options);
 
 			function updateChart() {
+				var cnPressed = Math.abs(nPressed - lnPressed);
+				lnPressed = nPressed;
 				chartData.datasets[0].data.push(nPressed);
 				chartData.datasets[0].data.shift();
 				chartData.datasets[1].data.push(cnPressed);
@@ -84,7 +86,7 @@
 				}
 				Chart1.Line(chartData, options);
 				nPressed = 0;
-				cnPressed = 0;
+				lnPressed = 0;
 				timer = setInterval(updateChart, element.options[element.selectedIndex].value);
 			}
 
@@ -128,6 +130,7 @@
 						chartData.datasets[1].pointStrokeColor = "rgba(255,255,255,0)";
 					}
 				}
+				Chart1.Line(chartData, options);
 			}
 
 			var socket = io();
@@ -145,7 +148,6 @@
 					}
 
 				}
-				cnPressed = Math.abs(count - nPressed);
 				nPressed = count;
     		});
 		</script>
