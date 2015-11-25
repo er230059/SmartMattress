@@ -9,8 +9,6 @@
 	</head>
 	<body>
 		<a href="/">Homepage</a><br><br>
-		Show number of electrodes pressed(blue curve): <input type="checkbox" id="check0" onclick="onCheckUpdate(this)" checked><br>
-		Show change rate of electrodes pressed(green curve): <input type="checkbox" id="check1" onclick="onCheckUpdate(this)" checked><br><br>
 		Adjust refresh rate (x-axis TIME/DIV):
 		<select onchange="onRateUpdate(this)">
 		  <option value="100">100ms</option>
@@ -20,8 +18,10 @@
 		  <option value="2000">2s</option>
 		  <option value="5000">5s</option>
 		</select><br>
-		Adjust y-axis range: <input type="range" id="range1" value="320" min="10" max="320" step="5" onchange="onRangeUpdate(this)"><br><br>
+		Adjust y-axis range: <input type="range" id="range1" value="320" min="10" max="200" step="10" onchange="onRangeUpdate(this)"><br><br>
 		<canvas id="canvas1" height="600" width="1800"></canvas><br>
+		Blue curve: number of electrodes pressed<br>
+		Green curve: change rate of electrodes pressed
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="/js/Chart.js"></script>
 		<script>
@@ -64,27 +64,23 @@
 				scaleStepWidth : 10,
 				scaleStartValue : 0
 			};
-			var Chart1 = new Chart(ctx)
-			Chart1.Line(chartData, options);
+			var Chart1 = new Chart(ctx).Line(chartData, options);
 
 			function updateChart() {
 				var cnPressed = Math.abs(nPressed - lnPressed);
 				lnPressed = nPressed;
-				chartData.datasets[0].data.push(nPressed);
-				chartData.datasets[0].data.shift();
-				chartData.datasets[1].data.push(cnPressed);
-				chartData.datasets[1].data.shift();
-				Chart1.Line(chartData, options);
+				Chart1.removeData();
+				Chart1.addData([nPressed, cnPressed], '');
 			}
 			var timer = setInterval(updateChart, 100);
 
 			function onRateUpdate (element) {
 				clearInterval(timer);
 				for (var i = 0; i <= 100; i++) {
-					chartData.datasets[0].data[i] = 0;
-					chartData.datasets[1].data[i] = 0;
+					Chart1.datasets[0].points[i].value = 0;
+					Chart1.datasets[1].points[i].value = 0;
 				}
-				Chart1.Line(chartData, options);
+				Chart1.update();
 				nPressed = 0;
 				lnPressed = 0;
 				timer = setInterval(updateChart, element.options[element.selectedIndex].value);
@@ -92,52 +88,23 @@
 
 			function onRangeUpdate (element) {
 				if(element.value > 160) {
-					options.scaleSteps = Math.round(element.value / 10);
-					options.scaleStepWidth = 10;
+					Chart1.scale.max = element.value;
+					Chart1.scale.steps = Math.round(element.value / 10);
+					Chart1.scale.stepValue = 10;
 				} else if(element.value > 40) {
-					options.scaleSteps = Math.round(element.value / 5);
-					options.scaleStepWidth = 5;
+					Chart1.scale.max = element.value;
+					Chart1.scale.steps = Math.round(element.value / 5);
+					Chart1.scale.stepValue = 5;
 				} else {
-					options.scaleSteps = element.value;
-					options.scaleStepWidth = 1;
+					Chart1.scale.max = element.value;
+					Chart1.scale.steps = element.value;
+					Chart1.scale.stepValue = 1;
 				}
-				Chart1.Line(chartData, options);
-			}
-
-			function onCheckUpdate (element) {
-				if(element.id == "check0") {
-					if(element.checked) {
-						chartData.datasets[0].fillColor = "rgba(100,120,180,0.2)";
-						chartData.datasets[0].strokeColor = "rgba(100,120,180,1)";
-						chartData.datasets[0].pointColor = "rgba(100,120,180,1)";
-						chartData.datasets[0].ppointStrokeColor = "rgba(255,255,255,1)";
-					} else {
-						chartData.datasets[0].fillColor = "rgba(100,120,180,0)";
-						chartData.datasets[0].strokeColor = "rgba(100,120,180,0)";
-						chartData.datasets[0].pointColor = "rgba(100,120,180,0)";
-						chartData.datasets[0].ppointStrokeColor = "rgba(255,255,255,0)";
-					}
-				} else if(element.id == "check1") {
-					if(element.checked) {
-						chartData.datasets[1].fillColor = "rgba(120,200,130,0.2)";
-						chartData.datasets[1].strokeColor = "rgba(120,200,130,1)";
-						chartData.datasets[1].pointColor = "rgba(120,200,130,1)";
-						chartData.datasets[1].pointStrokeColor = "rgba(255,255,255,1)";
-					} else {
-						chartData.datasets[1].fillColor = "rgba(120,200,130,0)";
-						chartData.datasets[1].strokeColor = "rgba(120,200,130,0)";
-						chartData.datasets[1].pointColor = "rgba(120,200,130,0)";
-						chartData.datasets[1].pointStrokeColor = "rgba(255,255,255,0)";
-					}
-				}
-				Chart1.Line(chartData, options);
+				Chart1.update();
 			}
 
 			var socket = io();
 			socket.on('update', function (data) {
-				var d = new Date();
-				var n = d.toTimeString();
-				var t = n.split(' ')[0].toString() + '.' + d.getMilliseconds().toString();
 				var count = 0;
 				var json = JSON.parse(data);
 				for(var i = 0; i < json.length; i++) {
