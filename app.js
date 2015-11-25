@@ -14,7 +14,7 @@ app.use(function (req, res, next) {
     next();
 });
 
-app.use(express.static('static'));
+app.use(express.static(__dirname + '/static'));
 
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/static/index.html');
