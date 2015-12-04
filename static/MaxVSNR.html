@@ -16,6 +16,43 @@
 			var vsnr = [];
 			var timer;
 
+			function getMaxVSNR() {
+				var max = -1, max_i = undefined, max_j = undefined;
+				var secondMax = -1, secondMax_i = undefined, secondMax_j = undefined;
+				var thirdMax = -1, thirdMax_i = undefined, thirdMax_j = undefined;
+				for(var i = 0; i < vsnr.length; i++) {
+					for(var j = 0; j < vsnr[i].length; j++) {
+						if(vsnr[i][j] > max) {
+							thirdMax = secondMax;
+							secondMax = max;
+							max = vsnr[i][j];
+
+							thirdMax_i = secondMax_i;
+							thirdMax_j = secondMax_j;
+							secondMax_i = max_i;
+							secondMax_j = max_j;
+							max_i = i;
+							max_j = j;
+						}
+						else if(vsnr[i][j] > secondMax) {
+							thirdMax = secondMax;
+							secondMax = vsnr[i][j];
+
+							thirdMax_i = secondMax_i;
+							thirdMax_j = secondMax_j;
+							secondMax_i = i;
+							secondMax_j = j;
+						}
+						else if(vsnr[i][j] > thirdMax) {
+							thirdMax = vsnr[i][j];
+
+							thirdMax_i = i;
+							thirdMax_j = j;
+						}
+					}
+				}
+			}
+
 			var socket = io();
 			socket.on('update', function (data) {
 				var json = JSON.parse(data);
@@ -32,7 +69,7 @@
 							}
 							if((value[1] - value[0] < 0) && (value[2] - value[1] > 0)) {
 								vsnr[nData[0][i]['id']] = vsnr[nData[0][i]['id']] || [];
-								vsnr[nData[0][i]['id']][j] = vsnr[nData[0][i]['id']][j] + 1 || 1; //first dimensional = id, second = index in id
+								vsnr[nData[0][i]['id']][j] = vsnr[nData[0][i]['id']][j] + 1 || 1; //first dimensional = sensor_id, second = index(channel) in sensor_id
 							}
 						}
 					}
@@ -49,7 +86,7 @@
 							}
 						}
 					}
-					if(Math.abs(nPressed - lnPressed) > thACT) {						
+					if(Math.abs(nPressed - lnPressed) > thACT) {
 						if(timer) {
 							clearTimeout(timer);
 							timer = undefined;
