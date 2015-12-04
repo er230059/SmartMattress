@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+
+		</style>
+		<title>MaxVSNR</title>
+	</head>
+	<body>
+		<a href="/">Homepage</a><br><br>
+		<script src="/socket.io/socket.io.js"></script>
+		<script>
+			const thACT = 10;
+			var ctRST = false;
+			var nData = []; //index 0 = t-2, 1 = t-1, 2 = t(latest)
+			var vsnr = [];
+			var timer;
+
+			var socket = io();
+			socket.on('update', function (data) {
+				var json = JSON.parse(data);
+				nData.push(data);
+				if(nData.length > 3) {
+					nData.shift();
+				}
+				if(ctRST) {
+					for(var i = 0; i < nData[0].length; i++) {
+						for(var j = 0; j < nData[0][i]['data'].length; j++) {
+							var value = []; //index 0=t-2, 1=t-1, 2=t(latest)
+							for(var k = 0; k < 3; k++) {
+								value.push(parseInt(nData[k][i]['data'][j], 16));
+							}
+							if((value[1] - value[0] < 0) && (value[2] - value[1] > 0)) {
+								vsnr[nData[0][i]['id']] = vsnr[nData[0][i]['id']] || [];
+								vsnr[nData[0][i]['id']][j] = vsnr[nData[0][i]['id']][j] + 1 || 1; //first dimensional = id, second = index in id
+							}
+						}
+					}
+				}
+				if(nData.length >= 2) {
+					var nPressed = 0, lnPressed = 0;
+					for(var i = 0; i < nData[nData.length - 1].length; i++) {
+						for(var j = 0; j < nData[nData.length - 1][i]['data'].length; j++) {
+							if(nData[nData.length - 1][i]['status'][j] == 1) {
+								nPressed += 1;
+							}
+							if(nData[nData.length - 2][i]['status'][j] == 1) {
+								lnPressed += 1;
+							}
+						}
+					}
+					if(Math.abs(nPressed - lnPressed) > thACT) {						
+						if(timer) {
+							clearTimeout(timer);
+							timer = undefined;
+						}
+						ctRST = true;
+						timer = setTimeout(function () {
+							ctRST = false;
+							vsnr = [];
+						}, 15000);
+					}
+				}
+    		});
+		</script>
+	</body>
+</html>
