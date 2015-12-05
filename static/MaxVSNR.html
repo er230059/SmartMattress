@@ -51,6 +51,12 @@
 						}
 					}
 				}
+				var json = {
+					'max' : {'id':max_i, 'channel':max_j, 'value':max},
+					'second_max' : {'id':secondMax_i, 'channel':secondMax_j, 'value':secondMax},
+					'third_max' : {'id':thirdMax_i, 'channel':thirdMax_j, 'value':thirdMax}
+				};
+				return json;
 			}
 
 			var socket = io();
