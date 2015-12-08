@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			canvas {pointer-events: none;}
+			input {vertical-align:middle;}
+		</style>
+		<title>Max VSNR</title>
+	</head>
+	<body>
+		<a href="/">Homepage</a><br><br>
+		Adjust refresh rate (x-axis TIME/DIV):
+		<select onchange="onRateUpdate(this)">
+		  <option value="100">100ms</option>
+		  <option value="200">200ms</option>
+		  <option value="500">500ms</option>
+		  <option value="1000">1s</option>
+		  <option value="2000">2s</option>
+		  <option value="5000">5s</option>
+		</select><br>
+		Adjust y-axis range: <input type="range" id="range1" value="33000" min="3300" max="33000" step="3300" onchange="onRangeUpdate(this)"><br><br>
+		<span id="max">Max - </span><br>
+		<span id="second_max">Second max - </span><br>
+		<span id="third_max">Third max - </span><br><br>
+		<canvas id="canvas1" height="600" width="1800"></canvas><br>
+		Red curve: Max VSNR electrodes value<br>
+		Green curve: Second max VSNR electrodes value<br>
+		Blue curve: Third max VSNR electrodes value
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="/js/Chart.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
+		<script>
+			const thACT = 3;
+			var ctRST = false;
+			var rstTimer;
+			var nData = []; //index 0 = t-2, 1 = t-1, 2 = t(latest)
+			var vsnr = [];
+			var nMaxVSNR = {}, lnMaxVSNR = {};
+
+			function getMaxVSNR() {
+				var max = -32768, max_i = undefined, max_j = undefined;
+				var secondMax = -32768, secondMax_i = undefined, secondMax_j = undefined;
+				var thirdMax = -32768, thirdMax_i = undefined, thirdMax_j = undefined;
+				for(var i = 0; i < vsnr.length; i++) {
+					for(var j = 0; j < vsnr[i].length; j++) {
+						if(vsnr[i][j] > max) {
+							thirdMax = secondMax;
+							secondMax = max;
+							max = vsnr[i][j];
+
+							thirdMax_i = secondMax_i;
+							thirdMax_j = secondMax_j;
+							secondMax_i = max_i;
+							secondMax_j = max_j;
+							max_i = i;
+							max_j = j;
+						} else if(vsnr[i][j] > secondMax) {
+							thirdMax = secondMax;
+							secondMax = vsnr[i][j];
+
+							thirdMax_i = secondMax_i;
+							thirdMax_j = secondMax_j;
+							secondMax_i = i;
+							secondMax_j = j;
+						} else if(vsnr[i][j] > thirdMax) {
+							thirdMax = vsnr[i][j];
+
+							thirdMax_i = i;
+							thirdMax_j = j;
+						}
+					}
+				}
+				var json = {
+					'max' : {'id':max_i, 'channel':max_j, 'value':max},
+					'second_max' : {'id':secondMax_i, 'channel':secondMax_j, 'value':secondMax},
+					'third_max' : {'id':thirdMax_i, 'channel':thirdMax_j, 'value':thirdMax}
+				};
+				return json;
+			}
+
+			var chartData = {
+				labels : [],
+				datasets : [
+					{
+						label: "max",
+						fillColor : "rgba(220,120,120,0.2)",
+						strokeColor : "rgba(220,120,120,1)",
+						pointColor : "rgba(220,120,120,1)",
+						pointStrokeColor : "rgba(255,255,255,1)",
+						data : []
+					},
+					{
+						label: "second_max",
+						fillColor : "rgba(160,200,120,0.2)",
+						strokeColor : "rgba(160,200,120,1)",
+						pointColor : "rgba(160,200,120,1)",
+						pointStrokeColor : "rgba(255,255,255,1)",
+						data : []
+					},
+					{
+						label: "third_max",
+						fillColor : "rgba(120,200,220,0.2)",
+						strokeColor : "rgba(120,200,220,1)",
+						pointColor : "rgba(120,200,220,1)",
+						pointStrokeColor : "rgba(255,255,255,1)",
+						data : []
+					}
+				]
+
+			}
+			for (var i = 0; i <= 100; i++) {
+				chartData.labels.push('');
+				chartData.datasets[0].data.push(-32768);
+				chartData.datasets[1].data.push(-32768);
+				chartData.datasets[2].data.push(-32768);
+			}
+
+			var ctx = document.getElementById("canvas1").getContext("2d");
+			var options = {
+				animation : false,
+				responsive: true,
+				scaleOverride : true,
+				scaleSteps : 20,
+				scaleStepWidth : 3300,
+				scaleStartValue : -33000
+			};
+			var Chart1 = new Chart(ctx).Line(chartData, options);
+
+			function updateChart() {
+				lnMaxVSNR = nMaxVSNR;
+				nMaxVSNR = getMaxVSNR();
+				document.getElementById('max').innerHTML = 'Max - id: ' + nMaxVSNR['max']['id'] + ' channel: ' + nMaxVSNR['max']['channel'] + ' value: ' + nMaxVSNR['max']['value'];
+				document.getElementById('second_max').innerHTML = 'Second max - id: ' + nMaxVSNR['second_max']['id'] + ' channel: ' + nMaxVSNR['second_max']['channel'] + ' value: ' + nMaxVSNR['second_max']['value'];
+				document.getElementById('third_max').innerHTML = 'Third max - id: ' + nMaxVSNR['third_max']['id'] + ' channel: ' + nMaxVSNR['third_max']['channel'] + ' value: ' + nMaxVSNR['third_max']['value'];
+
+				if(lnMaxVSNR) {
+					if(nMaxVSNR['max']['id'] != lnMaxVSNR['max']['id'] || nMaxVSNR['max']['channel'] != lnMaxVSNR['max']['channel']) {
+						for (var i = 0; i <= 100; i++) {
+							Chart1.datasets[0].points[i].value = 0;
+						}
+					}
+					if(nMaxVSNR['second_max']['id'] != lnMaxVSNR['second_max']['id'] || nMaxVSNR['second_max']['channel'] != lnMaxVSNR['second_max']['channel']) {
+						for (var i = 0; i <= 100; i++) {
+							Chart1.datasets[1].points[i].value = 0;
+						}
+					}
+					if(nMaxVSNR['third_max']['id'] != lnMaxVSNR['third_max']['id'] || nMaxVSNR['third_max']['channel'] != lnMaxVSNR['third_max']['channel']) {
+						for (var i = 0; i <= 100; i++) {
+
+							Chart1.datasets[2].points[i].value = 0;
+						}
+					}
+				}
+				var cData = [-32768 ,-32768, -32768];
+				if(nMaxVSNR['max']['value'] > -32768) {
+					cData[0] = nMaxVSNR['max']['value'];
+				}
+				if(nMaxVSNR['second_max']['value'] > -32768) {
+					cData[1] = nMaxVSNR['max']['value'];
+				}
+				if(nMaxVSNR['third_max']['value'] > -32768) {
+					cData[2] = nMaxVSNR['max']['value'];
+				}
+				Chart1.removeData();
+				Chart1.addData(cData, '');
+			}
+			var timer = setInterval(updateChart, 100);
+
+			function onRateUpdate (element) {
+				clearInterval(timer);
+				for (var i = 0; i <= 100; i++) {
+					Chart1.datasets[0].points[i].value = -32768;
+					Chart1.datasets[1].points[i].value = -32768;
+					Chart1.datasets[2].points[i].value = -32768;
+				}
+				Chart1.update();
+				timer = setInterval(updateChart, element.options[element.selectedIndex].value);
+			}
+
+			function onRangeUpdate (element) {
+				if(element.value > 26400) {
+					Chart1.scale.max = element.value;
+					Chart1.scale.min = -(element.value);
+					Chart1.scale.steps = Math.round(element.value / 1650);
+					Chart1.scale.stepValue = 3300;
+				} else if(element.value > 6600) {
+					Chart1.scale.max = element.value;
+					Chart1.scale.min = -(element.value);
+					Chart1.scale.steps = Math.round(element.value / 825);
+					Chart1.scale.stepValue = 1650;
+				} else {
+					Chart1.scale.max = element.value;
+					Chart1.scale.min = -(element.value);
+					Chart1.scale.steps = Math.round(element.value / 275);
+					Chart1.scale.stepValue = 550;
+				}
+				Chart1.update();
+			}
+
+			var socket = io();
+			socket.on('update', function (data) {
+				var json = JSON.parse(data);
+				nData.push(json);
+				if(nData.length > 3) {
+					nData.shift();
+				}
+				if(ctRST) {
+					for(var i = 0; i < nData[0].length; i++) {
+						for(var j = 0; j < nData[0][i]['data'].length; j++) {
+							var nValue = []; //index 0=t-2, 1=t-1, 2=t(latest)
+							for(var k = 0; k < 3; k++) {
+								var value = parseInt(nData[k][i]['data'][j], 16);
+								if(value >= 32768) {
+									value -= 65536;
+								}
+								nValue.push(value);
+							}
+							if((nValue[1] - nValue[0] < 0) && (nValue[2] - nValue[1] > 0)) {
+								vsnr[nData[0][i]['id']] = vsnr[nData[0][i]['id']] || [];
+								vsnr[nData[0][i]['id']][j] = vsnr[nData[0][i]['id']][j] + 1 || 1; //first dimensional = sensor_id, second = index(channel) in sensor_id
+							}
+						}
+					}
+				}
+				if(nData.length >= 2) {
+					var nPressed = 0, lnPressed = 0;
+					for(var i = 0; i < nData[nData.length - 1].length; i++) {
+						for(var j = 0; j < nData[nData.length - 1][i]['data'].length; j++) {
+							if(nData[nData.length - 1][i]['status'][j] == 1) {
+								nPressed += 1;
+							}
+							if(nData[nData.length - 2][i]['status'][j] == 1) {
+								lnPressed += 1;
+							}
+						}
+					}
+					if(Math.abs(nPressed - lnPressed) > thACT) {
+						if(rstTimer) {
+							clearTimeout(rstTimer);
+							rstTimer = undefined;
+						}
+						ctRST = true;
+						rstTimer = setTimeout(function () {
+							ctRST = false;
+							vsnr = [];
+						}, 15000);
+					}
+				}
+    		});
+		</script>
+	</body>
+</html>
