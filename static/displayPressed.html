@@ -9,6 +9,8 @@
 	</head>
 	<body>
 		<a href="/">Homepage</a><br><br>
+		Show number of electrodes pressed(blue curve): <input type="checkbox" id="check0" onclick="onCheckUpdate(this)" checked><br>
+		Show change rate of electrodes pressed(green curve): <input type="checkbox" id="check1" onclick="onCheckUpdate(this)" checked><br><br>
 		Adjust refresh rate (x-axis TIME/DIV):
 		<select onchange="onRateUpdate(this)">
 		  <option value="100">100ms</option>
@@ -69,18 +71,23 @@
 			function updateChart() {
 				var cnPressed = Math.abs(nPressed - lnPressed);
 				lnPressed = nPressed;
-				Chart1.removeData();
-				Chart1.addData([nPressed, cnPressed], '');
+				chartData.datasets[0].data.push(nPressed);
+				chartData.datasets[0].data.shift();
+				chartData.datasets[1].data.push(cnPressed);
+				chartData.datasets[1].data.shift();
+				Chart1.destroy();
+				Chart1 = new Chart(ctx).Line(chartData, options);
 			}
 			var timer = setInterval(updateChart, 100);
 
 			function onRateUpdate (element) {
 				clearInterval(timer);
 				for (var i = 0; i <= 100; i++) {
-					Chart1.datasets[0].points[i].value = 0;
-					Chart1.datasets[1].points[i].value = 0;
+					chartData.datasets[0].data[i] = 0;
+					chartData.datasets[1].data[i] = 0;
 				}
-				Chart1.update();
+				Chart1.destroy();
+				Chart1 = new Chart(ctx).Line(chartData, options);
 				nPressed = 0;
 				lnPressed = 0;
 				timer = setInterval(updateChart, element.options[element.selectedIndex].value);
@@ -88,19 +95,47 @@
 
 			function onRangeUpdate (element) {
 				if(element.value > 160) {
-					Chart1.scale.max = element.value;
-					Chart1.scale.steps = Math.round(element.value / 10);
-					Chart1.scale.stepValue = 10;
+					options.scaleSteps = Math.round(element.value / 10);
+					options.scaleStepWidth = 10;
 				} else if(element.value > 40) {
-					Chart1.scale.max = element.value;
-					Chart1.scale.steps = Math.round(element.value / 5);
-					Chart1.scale.stepValue = 5;
+					options.scaleSteps = Math.round(element.value / 5);
+					options.scaleStepWidth = 5;
 				} else {
-					Chart1.scale.max = element.value;
-					Chart1.scale.steps = element.value;
-					Chart1.scale.stepValue = 1;
+					options.scaleSteps = element.value;
+					options.scaleStepWidth = 1;
 				}
-				Chart1.update();
+				Chart1.destroy();
+				Chart1 = new Chart(ctx).Line(chartData, options);
+			}
+
+			function onCheckUpdate (element) {
+				if(element.id == "check0") {
+					if(element.checked) {
+						chartData.datasets[0].fillColor = "rgba(100,120,180,0.2)";
+						chartData.datasets[0].strokeColor = "rgba(100,120,180,1)";
+						chartData.datasets[0].pointColor = "rgba(100,120,180,1)";
+						chartData.datasets[0].ppointStrokeColor = "rgba(255,255,255,1)";
+					} else {
+						chartData.datasets[0].fillColor = "rgba(100,120,180,0)";
+						chartData.datasets[0].strokeColor = "rgba(100,120,180,0)";
+						chartData.datasets[0].pointColor = "rgba(100,120,180,0)";
+						chartData.datasets[0].ppointStrokeColor = "rgba(255,255,255,0)";
+					}
+				} else if(element.id == "check1") {
+					if(element.checked) {
+						chartData.datasets[1].fillColor = "rgba(120,200,130,0.2)";
+						chartData.datasets[1].strokeColor = "rgba(120,200,130,1)";
+						chartData.datasets[1].pointColor = "rgba(120,200,130,1)";
+						chartData.datasets[1].pointStrokeColor = "rgba(255,255,255,1)";
+					} else {
+						chartData.datasets[1].fillColor = "rgba(120,200,130,0)";
+						chartData.datasets[1].strokeColor = "rgba(120,200,130,0)";
+						chartData.datasets[1].pointColor = "rgba(120,200,130,0)";
+						chartData.datasets[1].pointStrokeColor = "rgba(255,255,255,0)";
+					}
+				}
+				Chart1.destroy();
+				Chart1 = new Chart(ctx).Line(chartData, options);
 			}
 
 			var socket = io();
@@ -113,6 +148,7 @@
 							count += 1;
 						}
 					}
+
 				}
 				nPressed = count;
     		});
