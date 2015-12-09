@@ -54,65 +54,56 @@ setInterval(function () {
     async.series([
         function (callback) {
             device30.write([0x78, 0x05, 0x00, 0x00, 0x00, 0x44, 0xc1], function (err) {
-                    if(err) callback(err);
-                    else callback(null);
+                    if(err) console.log(err);
+                    callback(null);
             });
         },
         function (callback) {
             device30.read(0x50, function (err, res) {
-                    if(err) callback(err);
-                    else {
-                        var data = formatData(0, res);
-                        if(!data) {
-                            callback(null);
-                        }
-                        else {
-                            responseData.push(data);
-                            callback(null);
-                        }
+                if(err) console.log(err);
+                else {
+                    var data = formatData(0, res);
+                    if(data) {
+                        responseData.push(data);
                     }
+                }
+                callback(null);
             });
         },
         function (callback) {
             device31.write([0x78, 0x05, 0x00, 0x00, 0x00, 0x44, 0xc1], function (err) {
-                    if(err) callback(err);
-                    else callback(null);
+                    if(err) console.log(err);
+                    callback(null);
             });
         },
         function (callback) {
             device31.read(0x50, function (err, res) {
-                    if(err) callback(err);
-                    else {
-                        var data = formatData(1, res);
-                        if(!data) {
-                            callback(null);
-                        }
-                        else {
-                            responseData.push(data);
-                            callback(null);
-                        }
+                if(err) console.log(err);
+                else {
+                    var data = formatData(1, res);
+                    if(data) {
+                        responseData.push(data);
                     }
+                }
+                callback(null);
             });
         },
         function (callback) {
             device32.write([0x78, 0x05, 0x00, 0x00, 0x00, 0x44, 0xc1], function (err) {
-                    if(err) callback(err);
-                    else callback(null);
+                    if(err) console.log(err);
+                    callback(null);
             });
         },
         function (callback) {
             device32.read(0x50, function (err, res) {
-                    if(err) callback(err);
-                    else {
-                        var data = formatData(2, res);
-                        if(!data) {
-                            callback(null);
-                        }
-                        else {
-                            responseData.push(data);
-                            callback(null);
-                        }
+                if(err) console.log(err);
+                else {
+                    var data = formatData(2, res);
+                    if(data) {
+                        responseData.push(data);
                     }
+                }
+                callback(null);
             });
         },
         function (callback) {

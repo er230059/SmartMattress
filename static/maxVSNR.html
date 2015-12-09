@@ -19,9 +19,9 @@
 		  <option value="5000">5s</option>
 		</select><br>
 		Adjust y-axis range: <input type="range" id="range1" value="33000" min="-3000" max="33000" step="3000" onchange="onRangeUpdate(this)"><br><br>
-		<span id="max">Max - </span><br>
-		<span id="second_max">Second max - </span><br>
-		<span id="third_max">Third max - </span><br><br>
+		<span id="max">Max - N/A</span><br>
+		<span id="second_max">Second max - N/A</span><br>
+		<span id="third_max">Third max - N/A</span><br><br>
 		<canvas id="canvas1" height="600" width="1800"></canvas><br>
 		Red curve: Max VSNR electrodes value<br>
 		Green curve: Second max VSNR electrodes value<br>
@@ -82,7 +82,7 @@
 				if(thirdMax == -32768) {
 					thirdMax = undefined;
 				}
-				
+
 				var json = {
 					'max' : {'id':max_i, 'channel':max_j, 'value':max},
 					'second_max' : {'id':secondMax_i, 'channel':secondMax_j, 'value':secondMax},
@@ -142,55 +142,61 @@
 			function updateChart() {
 				lnMaxVSNR = nMaxVSNR;
 				nMaxVSNR = getMaxVSNR();
-				
-				if(nMaxVSNR) {
-					document.getElementById('max').innerHTML = 'Max - id: ' + nMaxVSNR['max']['id'] + ' channel: ' + nMaxVSNR['max']['channel'] + ' value: ' + nMaxVSNR['max']['value'];
-					document.getElementById('second_max').innerHTML = 'Second max - id: ' + nMaxVSNR['second_max']['id'] + ' channel: ' + nMaxVSNR['second_max']['channel'] + ' value: ' + nMaxVSNR['second_max']['value'];
-					document.getElementById('third_max').innerHTML = 'Third max - id: ' + nMaxVSNR['third_max']['id'] + ' channel: ' + nMaxVSNR['third_max']['channel'] + ' value: ' + nMaxVSNR['third_max']['value'];
 
+				if(nMaxVSNR) {
 					if(lnMaxVSNR) {
 						if(nMaxVSNR['max']['id'] != lnMaxVSNR['max']['id'] || nMaxVSNR['max']['channel'] != lnMaxVSNR['max']['channel']) {
 							for (var i = 0; i <= 100; i++) {
-								chartData.datasets[0].data[i] = 0;
+								chartData.datasets[0].data[i] = null;
 							}
 						}
 						if(nMaxVSNR['second_max']['id'] != lnMaxVSNR['second_max']['id'] || nMaxVSNR['second_max']['channel'] != lnMaxVSNR['second_max']['channel']) {
 							for (var i = 0; i <= 100; i++) {
-								chartData.datasets[1].data[i] = 0;
+								chartData.datasets[1].data[i] = null;
 							}
 						}
 						if(nMaxVSNR['third_max']['id'] != lnMaxVSNR['third_max']['id'] || nMaxVSNR['third_max']['channel'] != lnMaxVSNR['third_max']['channel']) {
 							for (var i = 0; i <= 100; i++) {
-								chartData.datasets[2].data[i] = 0;
+								chartData.datasets[2].data[i] = null;
 							}
 						}
 					}
 
 					if(nMaxVSNR['max']['value']) {
-						chartData.datasets[0].data.push(nMaxVSNR['max']['value']);						
+						document.getElementById('max').innerHTML = 'Max - id: ' + nMaxVSNR['max']['id'] + ' channel: ' + nMaxVSNR['max']['channel'] + ' value: ' + nMaxVSNR['max']['value'];
+						chartData.datasets[0].data.push(nMaxVSNR['max']['value']);
 					} else {
+						document.getElementById('max').innerHTML = 'Max - N/A';
 						chartData.datasets[0].data.push(null);
 					}
 					if(nMaxVSNR['second_max']['value']) {
-						chartData.datasets[1].data.push(nMaxVSNR['second_max']['value']);						
+						document.getElementById('second_max').innerHTML = 'Second max - id: ' + nMaxVSNR['second_max']['id'] + ' channel: ' + nMaxVSNR['second_max']['channel'] + ' value: ' + nMaxVSNR['second_max']['value'];
+						chartData.datasets[1].data.push(nMaxVSNR['second_max']['value']);
 					} else {
+						document.getElementById('second_max').innerHTML = 'Second max - N/A';
 						chartData.datasets[1].data.push(null);
 					}
 					if(nMaxVSNR['third_max']['value']) {
-						chartData.datasets[2].data.push(nMaxVSNR['third_max']['value']);						
+						document.getElementById('third_max').innerHTML = 'Third max - id: ' + nMaxVSNR['third_max']['id'] + ' channel: ' + nMaxVSNR['third_max']['channel'] + ' value: ' + nMaxVSNR['third_max']['value'];
+						chartData.datasets[2].data.push(nMaxVSNR['third_max']['value']);
 					} else {
+						document.getElementById('third_max').innerHTML = 'Third max - N/A';
 						chartData.datasets[2].data.push(null);
 					}
 					chartData.datasets[0].data.shift();
 					chartData.datasets[1].data.shift();
 					chartData.datasets[2].data.shift();
+				} else {
+					document.getElementById('max').innerHTML = 'Max - N/A';
+					document.getElementById('second_max').innerHTML = 'Second max - N/A';
+					document.getElementById('third_max').innerHTML = 'Third max - N/A';
+					chartData.datasets[0].data.push(null);
+					chartData.datasets[1].data.push(null);
+					chartData.datasets[2].data.push(null);
+					chartData.datasets[0].data.shift();
+					chartData.datasets[1].data.shift();
+					chartData.datasets[2].data.shift();
 				}
-				chartData.datasets[0].data.push(null);
-				chartData.datasets[1].data.push(null);
-				chartData.datasets[2].data.push(null);
-				chartData.datasets[0].data.shift();
-				chartData.datasets[1].data.shift();
-				chartData.datasets[2].data.shift();
 				Chart1.destroy();
 				Chart1 = new Chart(ctx).Line(chartData, options);
 			}
