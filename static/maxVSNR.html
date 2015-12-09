@@ -18,7 +18,7 @@
 		  <option value="2000">2s</option>
 		  <option value="5000">5s</option>
 		</select><br>
-		Adjust y-axis range: <input type="range" id="range1" value="33000" min="-3000" max="33000" step="3000" onchange="onRangeUpdate(this)"><br><br>
+		Adjust y-axis range: <input type="range" id="range1" value="66000" min="0" max="66000" step="3000" onchange="onRangeUpdate(this)"><br><br>
 		<span id="max">Max - N/A</span><br>
 		<span id="second_max">Second max - N/A</span><br>
 		<span id="third_max">Third max - N/A</span><br><br>
@@ -41,15 +41,15 @@
 				if(vsnr.length == 0) {
 					return undefined;
 				}
-				var max = -32768, max_i = undefined, max_j = undefined;
-				var secondMax = -32768, secondMax_i = undefined, secondMax_j = undefined;
-				var thirdMax = -32768, thirdMax_i = undefined, thirdMax_j = undefined;
+				var max_vsnr = -1, max_i = undefined, max_j = undefined, max_value = undefined;
+				var secondMax_vsnr = -1, secondMax_i = undefined, secondMax_j = undefined, secondMax_value = undefined;
+				var thirdMax_vsnr = -1, thirdMax_i = undefined, thirdMax_j = undefined, thirdMax_value = undefined;
 				for(var i = 0; i < vsnr.length; i++) {
 					for(var j = 0; j < vsnr[i].length; j++) {
-						if(vsnr[i][j] > max) {
-							thirdMax = secondMax;
-							secondMax = max;
-							max = vsnr[i][j];
+						if(vsnr[i][j] > max_vsnr) {
+							thirdMax_vsnr = secondMax_vsnr;
+							secondMax_vsnr = max_vsnr;
+							max_vsnr = vsnr[i][j];
 
 							thirdMax_i = secondMax_i;
 							thirdMax_j = secondMax_j;
@@ -57,36 +57,36 @@
 							secondMax_j = max_j;
 							max_i = i;
 							max_j = j;
-						} else if(vsnr[i][j] > secondMax) {
-							thirdMax = secondMax;
-							secondMax = vsnr[i][j];
+						} else if(vsnr[i][j] > secondMax_vsnr) {
+							thirdMax_vsnr = secondMax_vsnr;
+							secondMax_vsnr = vsnr[i][j];
 
 							thirdMax_i = secondMax_i;
 							thirdMax_j = secondMax_j;
 							secondMax_i = i;
 							secondMax_j = j;
-						} else if(vsnr[i][j] > thirdMax) {
-							thirdMax = vsnr[i][j];
+						} else if(vsnr[i][j] > thirdMax_vsnr) {
+							thirdMax_vsnr = vsnr[i][j];
 
 							thirdMax_i = i;
 							thirdMax_j = j;
 						}
 					}
 				}
-				if(max == -32768) {
-					max = undefined;
+				if(max_vsnr != -1) {
+					max_value = parseInt(nData[2][max_i]['data'][max_j]);
 				}
-				if(secondMax == -32768) {
-					secondMax = undefined;
+				if(secondMax_vsnr != -1) {
+					secondMax_value = parseInt(nData[2][secondMax_i]['data'][secondMax_j]);
 				}
-				if(thirdMax == -32768) {
-					thirdMax = undefined;
+				if(thirdMax_vsnr != -1) {
+					thirdMax_value = parseInt(nData[2][thirdMax_i]['data'][thirdMax_j]);
 				}
 
 				var json = {
-					'max' : {'id':max_i, 'channel':max_j, 'value':max},
-					'second_max' : {'id':secondMax_i, 'channel':secondMax_j, 'value':secondMax},
-					'third_max' : {'id':thirdMax_i, 'channel':thirdMax_j, 'value':thirdMax}
+					'max' : {'id':max_i, 'channel':max_j, 'value':max_value},
+					'second_max' : {'id':secondMax_i, 'channel':secondMax_j, 'value':secondMax_value},
+					'third_max' : {'id':thirdMax_i, 'channel':thirdMax_j, 'value':thirdMax_value}
 				};
 				return json;
 			}
@@ -135,7 +135,7 @@
 				scaleOverride : true,
 				scaleSteps : 22,
 				scaleStepWidth : 3000,
-				scaleStartValue : -33000
+				scaleStartValue : 0
 			};
 			var Chart1 = new Chart(ctx).Line(chartData, options);
 
@@ -215,30 +215,21 @@
 			}
 
 			function onRangeUpdate (element) {
-				if(element.value > 18000) {
-					options.scaleSteps = Math.round(element.value / 1500);
+				if(element.value > 33000) {
+					options.scaleSteps = Math.round(element.value / 3000);
 					options.scaleStepWidth = 3000;
-					options.scaleStartValue = -element.value;
-				} else if(element.value > 6000) {
-					options.scaleSteps = Math.round(element.value / 500);
+				} else if(element.value > 12000) {
+					options.scaleSteps = Math.round(element.value / 1000);
 					options.scaleStepWidth = 1000;
-					options.scaleStartValue = -element.value;
 				} else if(element.value > 3000) {
-					options.scaleSteps = Math.round(element.value / 250);
+					options.scaleSteps = Math.round(element.value / 500);
 					options.scaleStepWidth = 500;
-					options.scaleStartValue = -element.value;
 				} else if(element.value > 0) {
-					options.scaleSteps = Math.round(element.value / 125);
+					options.scaleSteps = Math.round(element.value / 250);
 					options.scaleStepWidth = 250;
-					options.scaleStartValue = -element.value;
-				} else if(element.value > -3000) {
-					options.scaleSteps = 20;
-					options.scaleStepWidth = 100;
-					options.scaleStartValue = -1000;
 				} else {
-					options.scaleSteps = 20;
-					options.scaleStepWidth = 10;
-					options.scaleStartValue = -100;
+					options.scaleSteps = 22;
+					options.scaleStepWidth = 100;
 				}
 				Chart1.destroy();
 				Chart1 = new Chart(ctx).Line(chartData, options);
@@ -256,11 +247,7 @@
 						for(var j = 0; j < nData[0][i]['data'].length; j++) {
 							var nValue = []; //index 0=t-2, 1=t-1, 2=t(latest)
 							for(var k = 0; k < 3; k++) {
-								var value = parseInt(nData[k][i]['data'][j], 16);
-								if(value >= 32768) {
-									value -= 65536;
-								}
-								nValue.push(value);
+								nValue.push(parseInt(nData[k][i]['data'][j], 16));
 							}
 							if((nValue[1] - nValue[0] < 0) && (nValue[2] - nValue[1] > 0)) {
 								vsnr[nData[0][i]['id']] = vsnr[nData[0][i]['id']] || [];
