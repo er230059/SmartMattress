@@ -5,7 +5,7 @@
 			canvas {pointer-events: none;}
 			input {vertical-align:middle;}
 		</style>
-		<title>MaxVSNR</title>
+		<title>Max VSNR</title>
 	</head>
 	<body>
 		<a href="/">Homepage</a><br><br>
@@ -19,9 +19,9 @@
 		  <option value="5000">5s</option>
 		</select><br>
 		Adjust y-axis range: <input type="range" id="range1" value="33000" min="3300" max="33000" step="3300" onchange="onRangeUpdate(this)"><br><br>
-		<span id="max">Max: </span><br>
-		<span id="second_max">Second max: </span><br>
-		<span id="third_max">Third max: </span><br><br>
+		<span id="max">Max - </span><br>
+		<span id="second_max">Second max - </span><br>
+		<span id="third_max">Third max - </span><br><br>
 		<canvas id="canvas1" height="600" width="1800"></canvas><br>
 		Red curve: Max VSNR electrodes value<br>
 		Green curve: Second max VSNR electrodes value<br>
@@ -30,16 +30,17 @@
 		<script src="/js/Chart.js"></script>
 		<script src="/socket.io/socket.io.js"></script>
 		<script>
-			const thACT = 10;
+			const thACT = 3;
 			var ctRST = false;
+			var rstTimer;
 			var nData = []; //index 0 = t-2, 1 = t-1, 2 = t(latest)
 			var vsnr = [];
-			var timer;
+			var nMaxVSNR = {}, lnMaxVSNR = {};
 
 			function getMaxVSNR() {
-				var max = -1, max_i = undefined, max_j = undefined;
-				var secondMax = -1, secondMax_i = undefined, secondMax_j = undefined;
-				var thirdMax = -1, thirdMax_i = undefined, thirdMax_j = undefined;
+				var max = -32768, max_i = undefined, max_j = undefined;
+				var secondMax = -32768, secondMax_i = undefined, secondMax_j = undefined;
+				var thirdMax = -32768, thirdMax_i = undefined, thirdMax_j = undefined;
 				for(var i = 0; i < vsnr.length; i++) {
 					for(var j = 0; j < vsnr[i].length; j++) {
 						if(vsnr[i][j] > max) {
@@ -53,8 +54,7 @@
 							secondMax_j = max_j;
 							max_i = i;
 							max_j = j;
-						}
-						else if(vsnr[i][j] > secondMax) {
+						} else if(vsnr[i][j] > secondMax) {
 							thirdMax = secondMax;
 							secondMax = vsnr[i][j];
 
@@ -62,8 +62,7 @@
 							thirdMax_j = secondMax_j;
 							secondMax_i = i;
 							secondMax_j = j;
-						}
-						else if(vsnr[i][j] > thirdMax) {
+						} else if(vsnr[i][j] > thirdMax) {
 							thirdMax = vsnr[i][j];
 
 							thirdMax_i = i;
@@ -111,9 +110,9 @@
 			}
 			for (var i = 0; i <= 100; i++) {
 				chartData.labels.push('');
-				chartData.datasets[0].data.push(0);
-				chartData.datasets[1].data.push(0);
-				chartData.datasets[2].data.push(0);
+				chartData.datasets[0].data.push(-32768);
+				chartData.datasets[1].data.push(-32768);
+				chartData.datasets[2].data.push(-32768);
 			}
 
 			var ctx = document.getElementById("canvas1").getContext("2d");
@@ -128,17 +127,51 @@
 			var Chart1 = new Chart(ctx).Line(chartData, options);
 
 			function updateChart() {
+				lnMaxVSNR = nMaxVSNR;
+				nMaxVSNR = getMaxVSNR();
+				document.getElementById('max').innerHTML = 'Max - id: ' + nMaxVSNR['max']['id'] + ' channel: ' + nMaxVSNR['max']['channel'] + ' value: ' + nMaxVSNR['max']['value'];
+				document.getElementById('second_max').innerHTML = 'Second max - id: ' + nMaxVSNR['second_max']['id'] + ' channel: ' + nMaxVSNR['second_max']['channel'] + ' value: ' + nMaxVSNR['second_max']['value'];
+				document.getElementById('third_max').innerHTML = 'Third max - id: ' + nMaxVSNR['third_max']['id'] + ' channel: ' + nMaxVSNR['third_max']['channel'] + ' value: ' + nMaxVSNR['third_max']['value'];
+
+				if(lnMaxVSNR) {
+					if(nMaxVSNR['max']['id'] != lnMaxVSNR['max']['id'] || nMaxVSNR['max']['channel'] != lnMaxVSNR['max']['channel']) {
+						for (var i = 0; i <= 100; i++) {
+							Chart1.datasets[0].points[i].value = 0;
+						}
+					}
+					if(nMaxVSNR['second_max']['id'] != lnMaxVSNR['second_max']['id'] || nMaxVSNR['second_max']['channel'] != lnMaxVSNR['second_max']['channel']) {
+						for (var i = 0; i <= 100; i++) {
+							Chart1.datasets[1].points[i].value = 0;
+						}
+					}
+					if(nMaxVSNR['third_max']['id'] != lnMaxVSNR['third_max']['id'] || nMaxVSNR['third_max']['channel'] != lnMaxVSNR['third_max']['channel']) {
+						for (var i = 0; i <= 100; i++) {
+
+							Chart1.datasets[2].points[i].value = 0;
+						}
+					}
+				}
+				var cData = [-32768 ,-32768, -32768];
+				if(nMaxVSNR['max']['value'] > -32768) {
+					cData[0] = nMaxVSNR['max']['value'];
+				}
+				if(nMaxVSNR['second_max']['value'] > -32768) {
+					cData[1] = nMaxVSNR['max']['value'];
+				}
+				if(nMaxVSNR['third_max']['value'] > -32768) {
+					cData[2] = nMaxVSNR['max']['value'];
+				}
 				Chart1.removeData();
-				Chart1.addData([0, 0], '');
+				Chart1.addData(cData, '');
 			}
 			var timer = setInterval(updateChart, 100);
 
 			function onRateUpdate (element) {
 				clearInterval(timer);
 				for (var i = 0; i <= 100; i++) {
-					Chart1.datasets[0].points[i].value = 0;
-					Chart1.datasets[1].points[i].value = 0;
-					Chart1.datasets[2].points[i].value = 0;
+					Chart1.datasets[0].points[i].value = -32768;
+					Chart1.datasets[1].points[i].value = -32768;
+					Chart1.datasets[2].points[i].value = -32768;
 				}
 				Chart1.update();
 				timer = setInterval(updateChart, element.options[element.selectedIndex].value);
@@ -167,7 +200,7 @@
 			var socket = io();
 			socket.on('update', function (data) {
 				var json = JSON.parse(data);
-				nData.push(data);
+				nData.push(json);
 				if(nData.length > 3) {
 					nData.shift();
 				}
@@ -202,12 +235,12 @@
 						}
 					}
 					if(Math.abs(nPressed - lnPressed) > thACT) {
-						if(timer) {
-							clearTimeout(timer);
-							timer = undefined;
+						if(rstTimer) {
+							clearTimeout(rstTimer);
+							rstTimer = undefined;
 						}
 						ctRST = true;
-						timer = setTimeout(function () {
+						rstTimer = setTimeout(function () {
 							ctRST = false;
 							vsnr = [];
 						}, 15000);
