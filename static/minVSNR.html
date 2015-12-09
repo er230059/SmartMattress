@@ -5,7 +5,7 @@
 			canvas {pointer-events: none;}
 			input {vertical-align:middle;}
 		</style>
-		<title>Max VSNR</title>
+		<title>Min VSNR</title>
 	</head>
 	<body>
 		<a href="/">Homepage</a><br><br>
@@ -19,13 +19,13 @@
 		  <option value="5000">5s</option>
 		</select><br>
 		Adjust y-axis range: <input type="range" id="range1" value="66000" min="0" max="66000" step="3000" onchange="onRangeUpdate(this)"><br><br>
-		<span id="max">Max - N/A</span><br>
-		<span id="second_max">Second max - N/A</span><br>
-		<span id="third_max">Third max - N/A</span><br><br>
+		<span id="min">Min - N/A</span><br>
+		<span id="second_min">Second min - N/A</span><br>
+		<span id="third_min">Third min - N/A</span><br><br>
 		<canvas id="canvas1" height="600" width="1800"></canvas><br>
-		Red curve: Max VSNR electrodes value<br>
-		Green curve: Second max VSNR electrodes value<br>
-		Blue curve: Third max VSNR electrodes value
+		Red curve: Min VSNR electrodes value<br>
+		Green curve: Second min VSNR electrodes value<br>
+		Blue curve: Third min VSNR electrodes value
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="/js/Chart.js"></script>
 		<script src="/socket.io/socket.io.js"></script>
@@ -34,59 +34,59 @@
 			var ctRST = false;
 			var rstTimer;
 			var nData = []; //index 0 = t-2, 1 = t-1, 2 = t(latest)
-			var vsnr = [];
-			var nMaxVSNR = {}, lnMaxVSNR = {};
+			var vsnr = {};
+			var nMinVSNR = {}, lnMinVSNR = {};
 
-			function getMaxVSNR() {
-				if(vsnr.length == 0) {
+			function getMinVSNR() {
+				if(Object.keys(vsnr).length == 0) {
 					return undefined;
 				}
-				var max_vsnr = -1, max_i = undefined, max_j = undefined, max_value = undefined;
-				var secondMax_vsnr = -1, secondMax_i = undefined, secondMax_j = undefined, secondMax_value = undefined;
-				var thirdMax_vsnr = -1, thirdMax_i = undefined, thirdMax_j = undefined, thirdMax_value = undefined;
-				for(var i = 0; i < vsnr.length; i++) {
+				var min_vsnr = 32768, min_i = undefined, min_j = undefined, min_value = undefined;
+				var secondMin_vsnr = 32768, secondMin_i = undefined, secondMin_j = undefined, secondMin_value = undefined;
+				var thirdMin_vsnr = 32768, thirdMin_i = undefined, thirdMin_j = undefined, thirdMin_value = undefined;
+				for(var i in vsnr) {
 					for(var j = 0; j < vsnr[i].length; j++) {
-						if(vsnr[i][j] > max_vsnr) {
-							thirdMax_vsnr = secondMax_vsnr;
-							secondMax_vsnr = max_vsnr;
-							max_vsnr = vsnr[i][j];
+						if(vsnr[i][j] < min_vsnr) {
+							thirdMin_vsnr = secondMin_vsnr;
+							secondMin_vsnr = min_vsnr;
+							min_vsnr = vsnr[i][j];
 
-							thirdMax_i = secondMax_i;
-							thirdMax_j = secondMax_j;
-							secondMax_i = max_i;
-							secondMax_j = max_j;
-							max_i = i;
-							max_j = j;
-						} else if(vsnr[i][j] > secondMax_vsnr) {
-							thirdMax_vsnr = secondMax_vsnr;
-							secondMax_vsnr = vsnr[i][j];
+							thirdMin_i = secondMin_i;
+							thirdMin_j = secondMin_j;
+							secondMin_i = min_i;
+							secondMin_j = min_j;
+							min_i = i;
+							min_j = j;
+						} else if(vsnr[i][j] < secondMin_vsnr) {
+							thirdMin_vsnr = secondMin_vsnr;
+							secondMin_vsnr = vsnr[i][j];
 
-							thirdMax_i = secondMax_i;
-							thirdMax_j = secondMax_j;
-							secondMax_i = i;
-							secondMax_j = j;
-						} else if(vsnr[i][j] > thirdMax_vsnr) {
-							thirdMax_vsnr = vsnr[i][j];
+							thirdMin_i = secondMin_i;
+							thirdMin_j = secondMin_j;
+							secondMin_i = i;
+							secondMin_j = j;
+						} else if(vsnr[i][j] < thirdMin_vsnr) {
+							thirdMin_vsnr = vsnr[i][j];
 
-							thirdMax_i = i;
-							thirdMax_j = j;
+							thirdMin_i = i;
+							thirdMin_j = j;
 						}
 					}
 				}
-				if(max_vsnr != -1) {
-					max_value = parseInt(nData[2][max_i]['data'][max_j]);
+				if(min_vsnr < 32768) {
+					min_value = parseInt(nData[2][min_i]['data'][min_j]);
 				}
-				if(secondMax_vsnr != -1) {
-					secondMax_value = parseInt(nData[2][secondMax_i]['data'][secondMax_j]);
+				if(secondMin_vsnr < 32768) {
+					secondMin_value = parseInt(nData[2][secondMin_i]['data'][secondMin_j]);
 				}
-				if(thirdMax_vsnr != -1) {
-					thirdMax_value = parseInt(nData[2][thirdMax_i]['data'][thirdMax_j]);
+				if(thirdMin_vsnr < 32768) {
+					thirdMin_value = parseInt(nData[2][thirdMin_i]['data'][thirdMin_j]);
 				}
 
 				var json = {
-					'max' : {'id':max_i, 'channel':max_j, 'value':max_value},
-					'second_max' : {'id':secondMax_i, 'channel':secondMax_j, 'value':secondMax_value},
-					'third_max' : {'id':thirdMax_i, 'channel':thirdMax_j, 'value':thirdMax_value}
+					'min' : {'id':min_i, 'channel':min_j, 'value':min_value},
+					'second_min' : {'id':secondMin_i, 'channel':secondMin_j, 'value':secondMin_value},
+					'third_min' : {'id':thirdMin_i, 'channel':thirdMin_j, 'value':thirdMin_value}
 				};
 				return json;
 			}
@@ -95,7 +95,7 @@
 				labels : [],
 				datasets : [
 					{
-						label: "max",
+						label: "min",
 						fillColor : "rgba(220,120,120,0.2)",
 						strokeColor : "rgba(220,120,120,1)",
 						pointColor : "rgba(220,120,120,1)",
@@ -103,7 +103,7 @@
 						data : []
 					},
 					{
-						label: "second_max",
+						label: "second_min",
 						fillColor : "rgba(160,200,120,0.2)",
 						strokeColor : "rgba(160,200,120,1)",
 						pointColor : "rgba(160,200,120,1)",
@@ -111,7 +111,7 @@
 						data : []
 					},
 					{
-						label: "third_max",
+						label: "third_min",
 						fillColor : "rgba(120,200,220,0.2)",
 						strokeColor : "rgba(120,200,220,1)",
 						pointColor : "rgba(120,200,220,1)",
@@ -140,56 +140,56 @@
 			var Chart1 = new Chart(ctx).Line(chartData, options);
 
 			function updateChart() {
-				lnMaxVSNR = nMaxVSNR;
-				nMaxVSNR = getMaxVSNR();
+				lnMinVSNR = nMinVSNR;
+				nMinVSNR = getMinVSNR();
 
-				if(nMaxVSNR) {
-					if(lnMaxVSNR) {
-						if(nMaxVSNR['max']['id'] != lnMaxVSNR['max']['id'] || nMaxVSNR['max']['channel'] != lnMaxVSNR['max']['channel']) {
+				if(nMinVSNR) {
+					if(lnMinVSNR) {
+						if(nMinVSNR['min']['id'] != lnMinVSNR['min']['id'] || nMinVSNR['min']['channel'] != lnMinVSNR['min']['channel']) {
 							for (var i = 0; i <= 100; i++) {
 								chartData.datasets[0].data[i] = null;
 							}
 						}
-						if(nMaxVSNR['second_max']['id'] != lnMaxVSNR['second_max']['id'] || nMaxVSNR['second_max']['channel'] != lnMaxVSNR['second_max']['channel']) {
+						if(nMinVSNR['second_min']['id'] != lnMinVSNR['second_min']['id'] || nMinVSNR['second_min']['channel'] != lnMinVSNR['second_min']['channel']) {
 							for (var i = 0; i <= 100; i++) {
 								chartData.datasets[1].data[i] = null;
 							}
 						}
-						if(nMaxVSNR['third_max']['id'] != lnMaxVSNR['third_max']['id'] || nMaxVSNR['third_max']['channel'] != lnMaxVSNR['third_max']['channel']) {
+						if(nMinVSNR['third_min']['id'] != lnMinVSNR['third_min']['id'] || nMinVSNR['third_min']['channel'] != lnMinVSNR['third_min']['channel']) {
 							for (var i = 0; i <= 100; i++) {
 								chartData.datasets[2].data[i] = null;
 							}
 						}
 					}
 
-					if(nMaxVSNR['max']['value']) {
-						document.getElementById('max').innerHTML = 'Max - id: ' + nMaxVSNR['max']['id'] + ' channel: ' + nMaxVSNR['max']['channel'] + ' value: ' + nMaxVSNR['max']['value'];
-						chartData.datasets[0].data.push(nMaxVSNR['max']['value']);
+					if(nMinVSNR['min']['value']) {
+						document.getElementById('min').innerHTML = 'Min - id: ' + nMinVSNR['min']['id'] + ' channel: ' + nMinVSNR['min']['channel'] + ' value: ' + nMinVSNR['min']['value'];
+						chartData.datasets[0].data.push(nMinVSNR['min']['value']);
 					} else {
-						document.getElementById('max').innerHTML = 'Max - N/A';
+						document.getElementById('min').innerHTML = 'Min - N/A';
 						chartData.datasets[0].data.push(null);
 					}
-					if(nMaxVSNR['second_max']['value']) {
-						document.getElementById('second_max').innerHTML = 'Second max - id: ' + nMaxVSNR['second_max']['id'] + ' channel: ' + nMaxVSNR['second_max']['channel'] + ' value: ' + nMaxVSNR['second_max']['value'];
-						chartData.datasets[1].data.push(nMaxVSNR['second_max']['value']);
+					if(nMinVSNR['second_min']['value']) {
+						document.getElementById('second_min').innerHTML = 'Second min - id: ' + nMinVSNR['second_min']['id'] + ' channel: ' + nMinVSNR['second_min']['channel'] + ' value: ' + nMinVSNR['second_min']['value'];
+						chartData.datasets[1].data.push(nMinVSNR['second_min']['value']);
 					} else {
-						document.getElementById('second_max').innerHTML = 'Second max - N/A';
+						document.getElementById('second_min').innerHTML = 'Second min - N/A';
 						chartData.datasets[1].data.push(null);
 					}
-					if(nMaxVSNR['third_max']['value']) {
-						document.getElementById('third_max').innerHTML = 'Third max - id: ' + nMaxVSNR['third_max']['id'] + ' channel: ' + nMaxVSNR['third_max']['channel'] + ' value: ' + nMaxVSNR['third_max']['value'];
-						chartData.datasets[2].data.push(nMaxVSNR['third_max']['value']);
+					if(nMinVSNR['third_min']['value']) {
+						document.getElementById('third_min').innerHTML = 'Third min - id: ' + nMinVSNR['third_min']['id'] + ' channel: ' + nMinVSNR['third_min']['channel'] + ' value: ' + nMinVSNR['third_min']['value'];
+						chartData.datasets[2].data.push(nMinVSNR['third_min']['value']);
 					} else {
-						document.getElementById('third_max').innerHTML = 'Third max - N/A';
+						document.getElementById('third_min').innerHTML = 'Third min - N/A';
 						chartData.datasets[2].data.push(null);
 					}
 					chartData.datasets[0].data.shift();
 					chartData.datasets[1].data.shift();
 					chartData.datasets[2].data.shift();
 				} else {
-					document.getElementById('max').innerHTML = 'Max - N/A';
-					document.getElementById('second_max').innerHTML = 'Second max - N/A';
-					document.getElementById('third_max').innerHTML = 'Third max - N/A';
+					document.getElementById('min').innerHTML = 'Min - N/A';
+					document.getElementById('second_min').innerHTML = 'Second min - N/A';
+					document.getElementById('third_min').innerHTML = 'Third min - N/A';
 					chartData.datasets[0].data.push(null);
 					chartData.datasets[1].data.push(null);
 					chartData.datasets[2].data.push(null);
@@ -273,11 +273,13 @@
 							clearTimeout(rstTimer);
 							rstTimer = undefined;
 						}
-						ctRST = true;
+						if(!ctRST) {
+							vsnr = [];
+							ctRST = true;
+						}
 						rstTimer = setTimeout(function () {
 							ctRST = false;
-							vsnr = [];
-						}, 15000);
+						}, 20000);
 					}
 				}
     		});
