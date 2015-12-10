@@ -23,9 +23,9 @@
 		<span id="second_min">Second min - N/A</span><br>
 		<span id="third_min">Third min - N/A</span><br><br>
 		<canvas id="canvas1" height="600" width="1800"></canvas><br>
-		Red curve: Min VSNR electrodes value<br>
-		Green curve: Second min VSNR electrodes value<br>
-		Blue curve: Third min VSNR electrodes value
+		Red curve: Minimum VSNR electrodes value<br>
+		Green curve: Second minimum VSNR electrodes value<br>
+		Blue curve: Third minimum VSNR electrodes value
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="/js/Chart.js"></script>
 		<script src="/socket.io/socket.io.js"></script>
@@ -273,10 +273,8 @@
 							clearTimeout(rstTimer);
 							rstTimer = undefined;
 						}
-						if(!ctRST) {
-							vsnr = [];
-							ctRST = true;
-						}
+						vsnr = [];
+						ctRST = true;
 						rstTimer = setTimeout(function () {
 							ctRST = false;
 						}, 20000);
