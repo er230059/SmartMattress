@@ -4,9 +4,6 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var async = require('async');
 var i2c = require('i2c');
-var device30 = new i2c(0x30, {device: '/dev/i2c-1'});
-var device31 = new i2c(0x31, {device: '/dev/i2c-1'});
-var device32 = new i2c(0x32, {device: '/dev/i2c-1'});
 
 app.use(function (req, res, next) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -23,6 +20,11 @@ app.get('/', function (req, res) {
 http.listen(80, function () {
     console.log('server listening on port 80');
 });
+
+var device = []
+for(var i = 0; i < 10; i++) {
+	device.push(new i2c(0x30 + i, {device: '/dev/i2c-1'}));
+}
 
 function formatData (id, res) {
     var json = {'id':id, 'data':[], 'status':[]};
@@ -50,67 +52,41 @@ function formatData (id, res) {
 }
 
 setInterval(function () {
-    var responseData = [];
-    async.series([
-        function (callback) {
-            device30.write([0x78, 0x05, 0x00, 0x00, 0x00, 0x44, 0xc1], function (err) {
-                    if(err) console.log(err);
-                    callback(null);
-            });
-        },
-        function (callback) {
-            device30.read(0x50, function (err, res) {
-                if(err) console.log(err);
-                else {
-                    var data = formatData(0, res);
-                    if(data) {
-                        responseData.push(data);
-                    }
-                }
-                callback(null);
-            });
-        },
-        function (callback) {
-            device31.write([0x78, 0x05, 0x00, 0x00, 0x00, 0x44, 0xc1], function (err) {
-                    if(err) console.log(err);
-                    callback(null);
-            });
-        },
-        function (callback) {
-            device31.read(0x50, function (err, res) {
-                if(err) console.log(err);
-                else {
-                    var data = formatData(1, res);
-                    if(data) {
-                        responseData.push(data);
-                    }
-                }
-                callback(null);
-            });
-        },
-        function (callback) {
-            device32.write([0x78, 0x05, 0x00, 0x00, 0x00, 0x44, 0xc1], function (err) {
-                    if(err) console.log(err);
-                    callback(null);
-            });
-        },
-        function (callback) {
-            device32.read(0x50, function (err, res) {
-                if(err) console.log(err);
-                else {
-                    var data = formatData(2, res);
-                    if(data) {
-                        responseData.push(data);
-                    }
-                }
-                callback(null);
-            });
-        },
-        function (callback) {
-            io.emit('update', JSON.stringify(responseData));
-            callback(null);
-        }
-    ],function(err){
-    	if(err) console.log(err);
-	});
-}, 200)
+	var i = 0;
+	var responseData = [];
+	async.whilst(
+	    function () {
+	    	return i < device.length;
+	    },
+	    function (callback) {
+	    	var index = i;
+	    	i++;
+	        device[index].write([0x78, 0x05, 0x00, 0x00, 0x00, 0x44, 0xc1], function (err) {
+	            if(err) {
+	            	console.log(err);
+	            	callback(null);
+	            } else {
+		            device[index].read(0x50, function (err, res) {
+		                if(err) {
+		                	console.log(err);
+		                	callback(null);
+		                } else {
+		                    var data = formatData(index, res);
+		                    if(data) {
+		                        responseData.push(data);
+		                    }
+		                    callback(null);
+		                }
+		            });
+	            }
+	        });
+	    },
+	    function (err) {
+	    	if(err) {
+	    		console.log(err);
+	    	} else {
+	    		io.emit('update', JSON.stringify(responseData));
+	    	}
+	    }
+	);
+}, 200);
