@@ -23,7 +23,7 @@ http.listen(80, function () {
 
 var device = []
 for(var i = 0; i < 10; i++) {
-	device.push(new i2c(0x30 + i, {device: '/dev/i2c-1'}));
+	device.push(new i2c(0x31 + i, {device: '/dev/i2c-1'}));
 }
 
 function formatData (id, res) {
