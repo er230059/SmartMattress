@@ -28,24 +28,22 @@ for(var i = 0; i < 10; i++) {
 
 function formatData (id, res) {
     var json = {'id':id, 'data':[], 'status':[]};
-    if(res[6].toString(16) != '78' || res[7].toString(16) != '48') {
+    if(res[6] != 0x78 || res[7] != 0x48) {
         return null;
     }
     for(var i = 0; i < 6; i++) {
-        if(res[i].toString(16) != 'a5') {
+        if(res[i] != 0xa5) {
             return null;
         }
     }
     for(var i = 11; i < 75; i += 2) {
-        var d1 = ('0' + res[i].toString(16)).slice(-2);
-        var d0 = ('0' + res[i+1].toString(16)).slice(-2);
-        json['data'].push('0x' + d1 + d0);
+        json['data'].push((res[i] * 256) + res[i+1]);
     }
     for(var i = 75; i < 79; i++) {
         var bData = ('0000000' + res[i].toString(2)).slice(-8);
         var bDataArray = bData.split('');
         for(var j = 0; j < bDataArray.length; j++) {
-            json['status'].push(bDataArray[j]);
+            json['status'].push(parseInt(bDataArray[j]));
         }
     }
     return json;

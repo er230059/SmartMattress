@@ -36,7 +36,7 @@
 				for(var i = 0; i < json.length; i++) {
 					for(var j = 0; j < json[i]['data'].length; j++) {
 						var id = json[i]['id'].toString() + (('0' + j.toString()).slice(-2));
-						document.getElementById(id).innerHTML = json[i]['data'][j];
+						document.getElementById(id).innerHTML = '0x' + (('000' + json[i]['data'][j].toString(16)).slice(-4));
 						document.getElementById(id).style.backgroundColor = ((json[i]['status'][j] == 1) ? "orange" : "white");
 					}
 				}
