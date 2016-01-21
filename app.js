@@ -1,7 +1,8 @@
+var http = require('http');
 var express = require('express');
 var app = express();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+var server = http.Server(app);
+var io = require('socket.io')(server);
 var async = require('async');
 var i2c = require('i2c');
 
@@ -17,13 +18,13 @@ app.get('/', function (req, res) {
     res.sendFile(__dirname + '/static/index.html');
 });
 
-http.listen(80, function () {
+server.listen(80, function () {
     console.log('server listening on port 80');
 });
 
 var device = []
 for(var i = 0; i < 10; i++) {
-	device.push(new i2c(0x31 + i, {device: '/dev/i2c-1'}));
+    device.push(new i2c(0x31 + i, {device: '/dev/i2c-1'}));
 }
 
 function formatData (id, res) {
@@ -50,41 +51,60 @@ function formatData (id, res) {
 }
 
 setInterval(function () {
-	var i = 0;
-	var responseData = [];
-	async.whilst(
-	    function () {
-	    	return i < device.length;
-	    },
-	    function (callback) {
-	    	var index = i;
-	    	i++;
-	        device[index].write([0x78, 0x05, 0x00, 0x00, 0x00, 0x44, 0xc1], function (err) {
-	            if(err) {
-	            	console.log(err);
-	            	callback(null);
-	            } else {
-		            device[index].read(0x50, function (err, res) {
-		                if(err) {
-		                	console.log(err);
-		                	callback(null);
-		                } else {
-		                    var data = formatData(index, res);
-		                    if(data) {
-		                        responseData.push(data);
-		                    }
-		                    callback(null);
-		                }
-		            });
-	            }
-	        });
-	    },
-	    function (err) {
-	    	if(err) {
-	    		console.log(err);
-	    	} else {
-	    		io.emit('update', JSON.stringify(responseData));
-	    	}
-	    }
-	);
+    var i = 0;
+    var datas = [];
+    async.whilst(
+        function () {
+            return i < device.length;
+        },
+        function (callback) {
+            var index = i;
+            i++;
+            device[index].write([0x78, 0x05, 0x00, 0x00, 0x00, 0x44, 0xc1], function (err) {
+                if(err) {
+                    console.log(err);
+                    callback(null);
+                } else {
+                    device[index].read(0x50, function (err, res) {
+                        if(err) {
+                            console.log(err);
+                            callback(null);
+                        } else {
+                            var data = formatData(index, res);
+                            if(data) {
+                                datas.push(data);
+                            }
+                            callback(null);
+                        }
+                    });
+                }
+            });
+        },
+        function (err) {
+            if(err) {
+                console.log(err);
+            } else {
+                io.emit('update', JSON.stringify(datas));
+
+                var options = {
+                    hostname: "140.128.86.88",
+                    port: 8080,
+                    path: "/addData",
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                };
+                var req = http.request(options, function(res) {
+                    res.on('data', function (data) {
+                    });
+                });
+                req.on('error', function(e) {
+                    console.log(e.message);
+                });
+                req.write(JSON.stringify({'datas': datas}));
+                req.end();
+            }
+        }
+    );
 }, 200);
