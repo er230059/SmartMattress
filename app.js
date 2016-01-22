@@ -84,7 +84,8 @@ setInterval(function () {
             if(err) {
                 console.log(err);
             } else {
-                io.emit('update', JSON.stringify(datas));
+                var stringifyDatas = JSON.stringify(datas);
+                io.emit('update', stringifyDatas);
 
                 var options = {
                     hostname: "140.128.86.88",
@@ -102,7 +103,7 @@ setInterval(function () {
                 req.on('error', function(e) {
                     console.log(e.message);
                 });
-                req.write(JSON.stringify({'datas': datas}));
+                req.write(stringifyDatas);
                 req.end();
             }
         }
