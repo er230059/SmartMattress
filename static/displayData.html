@@ -12,8 +12,8 @@
 		<script>
 			for(var i = 0; i < 20; i++) {
 				for(var j = 0; j < 16; j++) {
-					var id0 = ((i % 4) * 8) + (j % 8);
-					var id1 = (Math.floor(i / 4) * 2 + Math.floor(j / 8));
+					var id0 = 31 - (((i % 4) * 8) + (j % 8));
+					var id1 = (Math.floor(i / 4) + (Math.floor(j / 8) == 1 ? 5 : 0));
 					if(id0.toString().length == 1) {
 						id0 = "0" + id0;
 					}
@@ -21,7 +21,7 @@
 					document.write("<span id=\"" + id + "\">0x1234</span>&nbsp");
 
 					if(j == 7) {
-						document.write("&nbsp&nbsp&nbsp&nbsp");
+						document.write("&nbsp&nbsp&nbsp");
 					}
 				}
 				document.write("<br>");
