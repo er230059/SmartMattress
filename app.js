@@ -14,10 +14,6 @@ app.use(function (req, res, next) {
 
 app.use(express.static(__dirname + '/static'));
 
-app.get('/', function (req, res) {
-    res.sendFile(__dirname + '/static/index.html');
-});
-
 server.listen(80, function () {
     console.log('server listening on port 80');
 });

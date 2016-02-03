@@ -10,29 +10,36 @@
 	<body>
 		<a href="/">Homepage</a><br><br>
 		Adjust refresh rate (x-axis TIME/DIV):
-		<select onchange="onRateUpdate(this)">
-		  <option value="100">100ms</option>
-		  <option value="200">200ms</option>
-		  <option value="500">500ms</option>
-		  <option value="1000">1s</option>
-		  <option value="2000">2s</option>
-		  <option value="5000">5s</option>
+		<select onchange="onRateUpdate(this);randerChart();">
+			<option value="100">100ms</option>
+			<option value="200">200ms</option>
+			<option value="500">500ms</option>
+			<option value="1000">1s</option>
+			<option value="2000">2s</option>
+			<option value="5000">5s</option>
 		</select><br>
-		Adjust y-axis range: <input type="range" id="range1" value="66000" min="0" max="66000" step="3000" onchange="onRangeUpdate(this)"><br><br>
+		Select wave to view:
+		<select id="select_wave" onchange="updateRange();randerChart();">
+			<option >Min</option>
+			<option >Second Min</option>
+			<option >Third Min</option>
+		</select><br><br>
 		<span id="min">Min - N/A</span><br>
 		<span id="second_min">Second min - N/A</span><br>
 		<span id="third_min">Third min - N/A</span><br><br>
 		<canvas id="canvas1" height="600" width="1800"></canvas><br>
-		Red curve: Minimum VSNR electrodes value<br>
-		Green curve: Second minimum VSNR electrodes value<br>
-		Blue curve: Third minimum VSNR electrodes value
+
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="/js/Chart.js"></script>
 		<script src="/socket.io/socket.io.js"></script>
 		<script>
-			const thACT = 3;
-			var ctRST = false;
-			var rstTimer;
+			const thACT = 5;
+
+			var ctRST = true;
+			var rstTimer = setTimeout(function () {
+				ctRST = false;
+			}, 15000);
+
 			var nData = []; //index 0 = t-2, 1 = t-1, 2 = t(latest)
 			var vsnr = {};
 			var nMinVSNR = {}, lnMinVSNR = {};
@@ -41,9 +48,9 @@
 				if(Object.keys(vsnr).length == 0) {
 					return undefined;
 				}
-				var min_vsnr = 32768, min_i = undefined, min_j = undefined, min_value = undefined;
-				var secondMin_vsnr = 32768, secondMin_i = undefined, secondMin_j = undefined, secondMin_value = undefined;
-				var thirdMin_vsnr = 32768, thirdMin_i = undefined, thirdMin_j = undefined, thirdMin_value = undefined;
+				var min_vsnr = Infinity, min_i = undefined, min_j = undefined, min_value = undefined;
+				var secondMin_vsnr = Infinity, secondMin_i = undefined, secondMin_j = undefined, secondMin_value = undefined;
+				var thirdMin_vsnr = Infinity, thirdMin_i = undefined, thirdMin_j = undefined, thirdMin_value = undefined;
 				for(var i in vsnr) {
 					for(var j = 0; j < vsnr[i].length; j++) {
 						if(vsnr[i][j] < min_vsnr) {
@@ -73,13 +80,13 @@
 						}
 					}
 				}
-				if(min_vsnr < 32768) {
+				if(min_vsnr != Infinity) {
 					min_value = parseInt(nData[2][min_i]['data'][min_j]);
 				}
-				if(secondMin_vsnr < 32768) {
+				if(secondMin_vsnr != Infinity) {
 					secondMin_value = parseInt(nData[2][secondMin_i]['data'][secondMin_j]);
 				}
-				if(thirdMin_vsnr < 32768) {
+				if(thirdMin_vsnr != Infinity) {
 					thirdMin_value = parseInt(nData[2][thirdMin_i]['data'][thirdMin_j]);
 				}
 
@@ -133,13 +140,13 @@
 				animation : false,
 				responsive: true,
 				scaleOverride : true,
-				scaleSteps : 22,
-				scaleStepWidth : 3000,
+				scaleSteps : 25,
+				scaleStepWidth : 2640,
 				scaleStartValue : 0
 			};
 			var Chart1 = new Chart(ctx).Line(chartData, options);
 
-			function updateChart() {
+			function updateChartData() {
 				lnMinVSNR = nMinVSNR;
 				nMinVSNR = getMinVSNR();
 
@@ -197,10 +204,10 @@
 					chartData.datasets[1].data.shift();
 					chartData.datasets[2].data.shift();
 				}
-				Chart1.destroy();
-				Chart1 = new Chart(ctx).Line(chartData, options);
+				updateRange();
+				randerChart();
 			}
-			var timer = setInterval(updateChart, 100);
+			var timer = setInterval(updateChartData, 100);
 
 			function onRateUpdate (element) {
 				clearInterval(timer);
@@ -209,28 +216,28 @@
 					chartData.datasets[1].data[i] = null;
 					chartData.datasets[2].data[i] = null;
 				}
-				Chart1.destroy();
-				Chart1 = new Chart(ctx).Line(chartData, options);
-				timer = setInterval(updateChart, element.options[element.selectedIndex].value);
+				timer = setInterval(updateChartData, element.options[element.selectedIndex].value);
 			}
 
-			function onRangeUpdate (element) {
-				if(element.value > 33000) {
-					options.scaleSteps = Math.round(element.value / 3000);
-					options.scaleStepWidth = 3000;
-				} else if(element.value > 12000) {
-					options.scaleSteps = Math.round(element.value / 1000);
-					options.scaleStepWidth = 1000;
-				} else if(element.value > 3000) {
-					options.scaleSteps = Math.round(element.value / 500);
-					options.scaleStepWidth = 500;
-				} else if(element.value > 0) {
-					options.scaleSteps = Math.round(element.value / 250);
-					options.scaleStepWidth = 250;
-				} else {
-					options.scaleSteps = 22;
-					options.scaleStepWidth = 100;
+			var lastMin = Infinity, lastMax = 0;
+			function updateRange () {
+				var selectedIndex = document.getElementById('select_wave').selectedIndex;
+				var min = Infinity, max = 0;
+				for(var i = 0; i < chartData.datasets[selectedIndex].data.length; i++) {
+					if(chartData.datasets[selectedIndex].data[i] == null) continue;
+					else if(chartData.datasets[selectedIndex].data[i] > max) max = chartData.datasets[selectedIndex].data[i];
+					else if(chartData.datasets[selectedIndex].data[i] < min) min = chartData.datasets[selectedIndex].data[i];
 				}
+
+				if(min != Infinity && (min < lastMin || max > lastMax)) {
+					options.scaleStepWidth = Math.round((max - min) / 15);
+					options.scaleStartValue =  Math.round(min - options.scaleStepWidth * 2.5);
+					lastMin = min;
+					lastMax = max;
+				}
+			}
+
+			function randerChart () {
 				Chart1.destroy();
 				Chart1 = new Chart(ctx).Line(chartData, options);
 			}
@@ -242,7 +249,7 @@
 				if(nData.length > 3) {
 					nData.shift();
 				}
-				if(ctRST) {
+				if(ctRST && nData.length >= 3) {
 					for(var i = 0; i < nData[0].length; i++) {
 						for(var j = 0; j < nData[0][i]['data'].length; j++) {
 							var nValue = []; //index 0=t-2, 1=t-1, 2=t(latest)
@@ -273,11 +280,11 @@
 							clearTimeout(rstTimer);
 							rstTimer = undefined;
 						}
-						vsnr = [];
+						vsnr = {};
 						ctRST = true;
 						rstTimer = setTimeout(function () {
 							ctRST = false;
-						}, 20000);
+						}, 15000);
 					}
 				}
     		});
