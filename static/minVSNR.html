@@ -230,7 +230,7 @@
 				}
 
 				if(min != Infinity && (min < lastMin || max > lastMax)) {
-					options.scaleStepWidth = Math.round((max - min) / 15);
+					options.scaleStepWidth = Math.floor((max - min) / 15) + 1;
 					options.scaleStartValue =  Math.round(min - options.scaleStepWidth * 2.5);
 					lastMin = min;
 					lastMax = max;
