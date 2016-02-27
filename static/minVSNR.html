@@ -252,11 +252,14 @@
 				if(ctRST && nData.length >= 3) {
 					for(var i = 0; i < nData[0].length; i++) {
 						for(var j = 0; j < nData[0][i]['data'].length; j++) {
-							var nValue = []; //index 0=t-2, 1=t-1, 2=t(latest)
+							var nValue = [], nStatus =[ ]; //index 0=t-2, 1=t-1, 2=t(latest)
 							for(var k = 0; k < 3; k++) {
 								nValue.push(parseInt(nData[k][i]['data'][j]));
 							}
-							if((nValue[1] - nValue[0] < 0) && (nValue[2] - nValue[1] > 0)) {
+							if(parseInt(nData[2][i]['status'][j]) == 1) {
+								vsnr[nData[0][i]['id']] = vsnr[nData[0][i]['id']] || [];
+								vsnr[nData[0][i]['id']][j] = Infinity;
+							} else if((nValue[1] - nValue[0] < 0) && (nValue[2] - nValue[1] > 0)) {
 								vsnr[nData[0][i]['id']] = vsnr[nData[0][i]['id']] || [];
 								vsnr[nData[0][i]['id']][j] = vsnr[nData[0][i]['id']][j] + 1 || 1; //first dimensional = sensor_id, second = index(channel) in sensor_id
 							}

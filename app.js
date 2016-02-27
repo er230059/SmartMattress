@@ -1,3 +1,4 @@
+var fs = require('fs');
 var http = require('http');
 var express = require('express');
 var app = express();
@@ -46,6 +47,28 @@ function formatData (id, res) {
     return json;
 }
 
+var record = false;
+io.on('connection', function (socket) {
+    socket.on('cmd', function(data) {
+        var json = JSON.parse(data);
+        if(json.cmd == 'start_record') {
+            record = true;
+            fs.unlink(__dirname + '/record_data.txt', function(err) {
+                if(err) {
+                    console.log(err);
+                }
+            });
+        } else if(json.cmd == 'stop_record') {
+            record = false;
+        }
+        io.emit('recoed_state', JSON.stringify({'state': record}));
+    });
+
+    socket.on('get_recoed_state', function(data) {
+      io.emit('recoed_state', JSON.stringify({'state': record}));
+    });
+});
+
 setInterval(function () {
     var i = 0;
     var datas = [];
@@ -80,10 +103,24 @@ setInterval(function () {
             if(err) {
                 console.log(err);
             } else {
+                if(record) {
+                    var writeString = '';
+                    for(var i = 0; i < datas.length; i++) {
+                        writeString += datas[i].id + ':\n';
+                        var data = '', status = '';
+                        for(var j = 0; j < datas[i].data.length; j++) {
+                            data += datas[i].data[j] + ' ';
+                            status += datas[i].status[j] + ' ';
+                        }
+                        writeString += data + '\n' + status + '\n\n';
+                    }
+                    writeString += 'Timestamp: ' + Date.now() + '\n\n==========================================\n';
+                    fs.appendFileSync(__dirname + '/record_data.txt', writeString);
+                }
                 var stringifyDatas = JSON.stringify(datas);
                 io.emit('update', stringifyDatas);
 
-                var options = {
+                /*var options = {
                     hostname: "140.128.86.88",
                     port: 8080,
                     path: "/addData",
@@ -100,7 +137,7 @@ setInterval(function () {
                     console.log(e.message);
                 });
                 req.write(stringifyDatas);
-                req.end();
+                req.end();*/
             }
         }
     );
