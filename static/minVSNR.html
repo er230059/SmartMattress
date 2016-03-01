@@ -229,7 +229,7 @@
 					else if(chartData.datasets[selectedIndex].data[i] < min) min = chartData.datasets[selectedIndex].data[i];
 				}
 
-				if(min != Infinity && (min < lastMin || max > lastMax)) {
+				if(min != Infinity && (min < lastMin || max > lastMax || (lastMax - lastMin) / (max - min) >= 1.5)) {
 					options.scaleStepWidth = Math.floor((max - min) / 15) + 1;
 					options.scaleStartValue =  Math.round(min - options.scaleStepWidth * 2.5);
 					lastMin = min;

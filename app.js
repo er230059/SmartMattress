@@ -15,6 +15,10 @@ app.use(function (req, res, next) {
 
 app.use(express.static(__dirname + '/static'));
 
+app.get('/getRecordData', function (req, res) {
+    res.sendFile(__dirname + '/record_data.txt');
+});
+
 server.listen(80, function () {
     console.log('server listening on port 80');
 });

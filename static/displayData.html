@@ -9,8 +9,8 @@
 	<body>
 		<a href="/">Homepage</a><br><br>
 		<button id="start" type="button" onclick="startRecording()">Start recording</button>
-		<button id="stop" type="button" onclick="stopRecording()">Stop recording</button>
-		<br><br>
+		<button id="stop" type="button" onclick="stopRecording()">Stop recording</button><br>
+		<a href="/getRecordData" target="_blank">Download recorded data</a><br><br>
 		<script src="/socket.io/socket.io.js"></script>
 		<script>
 			for(var i = 0; i < 20; i++) {
