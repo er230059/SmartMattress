@@ -1,0 +1,12 @@
+extends ./layout.jade
+
+block title
+	title Recorded Data
+
+block content
+	a(href='/') Homepage
+	br
+	br
+	each val in files
+		a(href='/record_data/' + val,  target='_blank') #{val}
+		br

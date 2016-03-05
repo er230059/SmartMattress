@@ -7,6 +7,10 @@ var io = require('socket.io')(server);
 var async = require('async');
 var i2c = require('i2c');
 
+const recordDataFolder = '/media/SD';
+
+app.set('view engine', 'jade');
+
 app.use(function (req, res, next) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     console.log(ip + ': '+ req.url);
@@ -14,9 +18,17 @@ app.use(function (req, res, next) {
 });
 
 app.use(express.static(__dirname + '/static'));
+app.use('/record_data', express.static('/media/SD'));
 
 app.get('/getRecordData', function (req, res) {
-    res.sendFile(__dirname + '/record_data.txt');
+    fs.readdir(recordDataFolder, function (err, data) {
+        if(err) {
+            console.log(err);
+            res.status(500).end();
+        } else {
+            res.render('getRecordData', {'files': data});
+        }
+    });
 });
 
 server.listen(80, function () {
@@ -52,16 +64,21 @@ function formatData (id, res) {
 }
 
 var record = false;
+var recordDataPath = '';
 io.on('connection', function (socket) {
     socket.on('cmd', function(data) {
         var json = JSON.parse(data);
         if(json.cmd == 'start_record') {
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var hour = ('0' + date.getHours()).slice(-2);
+            var minute = ('0' + date.getMinutes()).slice(-2);
+            var second = ('0' + date.getSeconds()).slice(-2);
+            var dateString = year + '-' + month + '-' + day + ' ' + hour + minute + second;
+            recordDataPath = recordDataFolder + '/record_data.' + dateString + '.txt';
             record = true;
-            fs.unlink(__dirname + '/record_data.txt', function(err) {
-                if(err) {
-                    console.log(err);
-                }
-            });
         } else if(json.cmd == 'stop_record') {
             record = false;
         }
@@ -119,7 +136,7 @@ setInterval(function () {
                         writeString += data + '\n' + status + '\n\n';
                     }
                     writeString += 'Timestamp: ' + Date.now() + '\n\n==========================================\n';
-                    fs.appendFileSync(__dirname + '/record_data.txt', writeString);
+                    fs.appendFileSync(recordDataPath, writeString);
                 }
                 var stringifyDatas = JSON.stringify(datas);
                 io.emit('update', stringifyDatas);
