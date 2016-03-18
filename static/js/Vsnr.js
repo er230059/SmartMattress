@@ -15,14 +15,14 @@ var socket = io();
 
 socket.on('update', function (data) {
 	var json = JSON.parse(data);
-	
-	for(var i = 0; i < data.length; i++) {
-		for(var j = 0; j < data[i]['data'].length; j++) {
-			data[i]['data'][j] += (plusData ? 1 : -1);			
+
+	for(var i = 0; i < json.length; i++) {
+		for(var j = 0; j < json[i]['data'].length; j++) {
+			json[i]['data'][j] += (plusData ? 1 : -1);
 		}
 	}
 	plusData = !plusData;
-	
+
 	nData.push(json);
 	if(nData.length > 3) {
 		nData.shift();
@@ -34,7 +34,7 @@ socket.on('update', function (data) {
 				for(var k = 0; k < 3; k++) {
 					nValue.push(parseInt(nData[k][i]['data'][j]));
 				}
-						
+
 				vsnr[nData[0][i]['id']] = vsnr[nData[0][i]['id']] || [];
 				if((nValue[1] - nValue[0] < 0) && (nValue[2] - nValue[1] > 0)) {
 					vsnr[nData[0][i]['id']][j] = vsnr[nData[0][i]['id']][j] + 1 || 1; //first dimensional = sensor_id, second = index(channel) in sensor_id
