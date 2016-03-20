@@ -1,4 +1,4 @@
-const thACT = 5, minVppLimit = 10;;
+const thACT = 5;
 
 var ctRST = true;
 var rstTimer = setTimeout(rstCtRST, 15000);
@@ -25,7 +25,7 @@ socket.on('update', function (data) {
 
 	for(var i = 0; i < json.length; i++) {
 		for(var j = 0; j < json[i]['data'].length; j++) {
-			json[i]['data'][j] += (plusData ? 1 : -1);
+			json[i]['data'][j] += (plusData && ctRST) ? 1 : -1;
 		}
 	}
 	plusData = !plusData;
