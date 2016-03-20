@@ -23,9 +23,9 @@ var socket = io();
 socket.on('update', function (data) {
 	var json = JSON.parse(data);
 
-	for(var i = 0; i < data.length; i++) {
-		for(var j = 0; j < data[i]['data'].length; j++) {
-			data[i]['data'][j] += (plusData ? 1 : -1);
+	for(var i = 0; i < json.length; i++) {
+		for(var j = 0; j < json[i]['data'].length; j++) {
+			json[i]['data'][j] += (plusData ? 1 : -1);
 		}
 	}
 	plusData = !plusData;

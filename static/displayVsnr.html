@@ -36,7 +36,7 @@
 					for(var j = 0; j < vsnr[i].length; j++){
 						var id = i.toString() + (('0' + j.toString()).slice(-2));
 						if(vsnr[i][j] == Infinity) {
-							document.getElementById(id).innerHTML = '999'
+							document.getElementById(id).innerHTML = 'XXX'
 							document.getElementById(id).style.backgroundColor = 'orange';
 						} else {
 							document.getElementById(id).innerHTML = (('00' + vsnr[i][j].toString()).slice(-3));
