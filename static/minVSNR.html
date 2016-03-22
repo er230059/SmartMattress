@@ -9,21 +9,14 @@
 	</head>
 	<body>
 		<a href="/">Homepage</a><br><br>
-		Adjust refresh rate (x-axis TIME/DIV):
-		<select onchange="onRateUpdate(this);randerChart();">
-			<option value="100">100ms</option>
-			<option value="200">200ms</option>
-			<option value="500">500ms</option>
-			<option value="1000">1s</option>
-			<option value="2000">2s</option>
-			<option value="5000">5s</option>
-		</select><br>
 		Select wave to view:
 		<select id="select_wave" onchange="updateRange();randerChart();">
 			<option >Min</option>
 			<option >Second Min</option>
 			<option >Third Min</option>
-		</select><br><br>
+		</select><br>
+		<button id="start" type="button" onclick="start()">Start</button>
+		<button id="stop" type="button" onclick="stop()">Stop</button><br><br>
 		<span id="min">Min - N/A</span><br>
 		<span id="second_min">Second min - N/A</span><br>
 		<span id="third_min">Third min - N/A</span><br><br>
@@ -35,6 +28,7 @@
 		<script>
 			var nMinVSNR = {}, lnMinVSNR = {};
 
+			document.getElementById("start").disabled = true;
 			function getMinVSNR() {
 				if(Object.keys(vsnr).length == 0) {
 					return undefined;
@@ -198,16 +192,18 @@
 				updateRange();
 				randerChart();
 			}
-			var timer = setInterval(updateChartData, 100);
+			var timer = setInterval(updateChartData, 200);
 
-			function onRateUpdate (element) {
+			function start() {
+				timer = setInterval(updateChartData, 200);
+				document.getElementById("start").disabled = true;
+				document.getElementById("stop").disabled = false;
+			}
+
+			function stop() {
 				clearInterval(timer);
-				for (var i = 0; i <= 100; i++) {
-					chartData.datasets[0].data[i] = null;
-					chartData.datasets[1].data[i] = null;
-					chartData.datasets[2].data[i] = null;
-				}
-				timer = setInterval(updateChartData, element.options[element.selectedIndex].value);
+				document.getElementById("start").disabled = false;
+				document.getElementById("stop").disabled = true;
 			}
 
 			var lastMin = Infinity, lastMax = 0;
