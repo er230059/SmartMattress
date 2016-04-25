@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			canvas {pointer-events: none;}
+			input {vertical-align:middle;}
+		</style>
+		<title>Breath Wave with Bandpass Filter</title>
+	</head>
+	<body>
+		<a href="/">Homepage</a><br><br>
+		Select wave to view:
+		<select id="select_wave" onchange="updateRange();randerChart();">
+			<option >Min</option>
+			<option >Second Min</option>
+			<option >Third Min</option>
+		</select><br>
+		<button id="start" type="button" onclick="start()">Start</button>
+		<button id="stop" type="button" onclick="stop()">Stop</button><br><br>
+		<span id="min">Min - N/A</span><br>
+		<span id="second_min">Second min - N/A</span><br>
+		<span id="third_min">Third min - N/A</span><br><br>
+		<canvas id="canvas1" height="600" width="1800"></canvas><br>
+
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="/js/chart.js"></script>
+		<script src="/js/vsnr.js"></script>
+		<script src="/js/bandpass.js"></script>
+		<script>
+			var nMinVSNR = {}, lnMinVSNR = {};
+			var rawBreathData = [];
+
+			document.getElementById("start").disabled = true;
+			function getMinVSNR() {
+				if(Object.keys(vsnr).length == 0) {
+					return undefined;
+				}
+				var min_vsnr = Infinity, min_i = undefined, min_j = undefined, min_value = undefined;
+				var secondMin_vsnr = Infinity, secondMin_i = undefined, secondMin_j = undefined, secondMin_value = undefined;
+				var thirdMin_vsnr = Infinity, thirdMin_i = undefined, thirdMin_j = undefined, thirdMin_value = undefined;
+				for(var i in vsnr) {
+					for(var j = 0; j < vsnr[i].length; j++) {
+						if(vsnr[i][j] < min_vsnr) {
+							thirdMin_vsnr = secondMin_vsnr;
+							secondMin_vsnr = min_vsnr;
+							min_vsnr = vsnr[i][j];
+
+							thirdMin_i = secondMin_i;
+							thirdMin_j = secondMin_j;
+							secondMin_i = min_i;
+							secondMin_j = min_j;
+							min_i = i;
+							min_j = j;
+						} else if(vsnr[i][j] < secondMin_vsnr) {
+							thirdMin_vsnr = secondMin_vsnr;
+							secondMin_vsnr = vsnr[i][j];
+
+							thirdMin_i = secondMin_i;
+							thirdMin_j = secondMin_j;
+							secondMin_i = i;
+							secondMin_j = j;
+						} else if(vsnr[i][j] < thirdMin_vsnr) {
+							thirdMin_vsnr = vsnr[i][j];
+
+							thirdMin_i = i;
+							thirdMin_j = j;
+						}
+					}
+				}
+				if(min_vsnr != Infinity) {
+					min_value = parseInt(nData[2][min_i]['data'][min_j]);
+				}
+				if(secondMin_vsnr != Infinity) {
+					secondMin_value = parseInt(nData[2][secondMin_i]['data'][secondMin_j]);
+				}
+				if(thirdMin_vsnr != Infinity) {
+					thirdMin_value = parseInt(nData[2][thirdMin_i]['data'][thirdMin_j]);
+				}
+
+				var json = {
+					'min' : {'id':min_i, 'channel':min_j, 'value':min_value},
+					'second_min' : {'id':secondMin_i, 'channel':secondMin_j, 'value':secondMin_value},
+					'third_min' : {'id':thirdMin_i, 'channel':thirdMin_j, 'value':thirdMin_value}
+				};
+				return json;
+			}
+
+			var chartData = {
+				labels : [],
+				datasets : [
+					{
+						label: "min",
+						fillColor : "rgba(220,120,120,0.2)",
+						strokeColor : "rgba(220,120,120,1)",
+						pointColor : "rgba(220,120,120,1)",
+						pointStrokeColor : "rgba(255,255,255,1)",
+						data : []
+					},
+					{
+						label: "second_min",
+						fillColor : "rgba(160,200,120,0.2)",
+						strokeColor : "rgba(160,200,120,1)",
+						pointColor : "rgba(160,200,120,1)",
+						pointStrokeColor : "rgba(255,255,255,1)",
+						data : []
+					},
+					{
+						label: "third_min",
+						fillColor : "rgba(120,200,220,0.2)",
+						strokeColor : "rgba(120,200,220,1)",
+						pointColor : "rgba(120,200,220,1)",
+						pointStrokeColor : "rgba(255,255,255,1)",
+						data : []
+					}
+				]
+
+			}
+			for (var i = 0; i <= 100; i++) {
+				chartData.labels.push('');
+				chartData.datasets[0].data.push(null);
+				chartData.datasets[1].data.push(null);
+				chartData.datasets[2].data.push(null);
+			}
+
+			for (var i = 0; i < 3; i++) {
+				rawBreathData[i] = [];
+				for(var j = 0; j < 102; j++) {
+					rawBreathData[i].push(0);
+				}
+			}
+
+			var ctx = document.getElementById("canvas1").getContext("2d");
+			var options = {
+				animation : false,
+				responsive: true,
+				scaleOverride : true,
+				scaleSteps : 25,
+				scaleStepWidth : 2640,
+				scaleStartValue : 0
+			};
+			var Chart1 = new Chart(ctx).Line(chartData, options);
+
+			function updateChartData() {
+				lnMinVSNR = nMinVSNR;
+				nMinVSNR = getMinVSNR();
+
+				if(nMinVSNR) {
+					if(lnMinVSNR) {
+						if(nMinVSNR['min']['id'] != lnMinVSNR['min']['id'] || nMinVSNR['min']['channel'] != lnMinVSNR['min']['channel']) {
+							for (var i = 0; i <= 100; i++) {
+								chartData.datasets[0].data[i] = null;
+							}
+						}
+						if(nMinVSNR['second_min']['id'] != lnMinVSNR['second_min']['id'] || nMinVSNR['second_min']['channel'] != lnMinVSNR['second_min']['channel']) {
+							for (var i = 0; i <= 100; i++) {
+								chartData.datasets[1].data[i] = null;
+							}
+						}
+						if(nMinVSNR['third_min']['id'] != lnMinVSNR['third_min']['id'] || nMinVSNR['third_min']['channel'] != lnMinVSNR['third_min']['channel']) {
+							for (var i = 0; i <= 100; i++) {
+								chartData.datasets[2].data[i] = null;
+							}
+						}
+					}
+
+					if(nMinVSNR['min']['value']) {
+						document.getElementById('min').innerHTML = 'Min - id: ' + nMinVSNR['min']['id'] + ' channel: ' + nMinVSNR['min']['channel'] + ' value: ' + nMinVSNR['min']['value'];
+						rawBreathData[0].push(nMinVSNR['min']['value']);
+						chartData.datasets[0].data = filter(rawBreathData[0]);
+						rawBreathData[0].shift();
+					} else {
+						document.getElementById('min').innerHTML = 'Min - N/A';
+						chartData.datasets[0].data.push(null);
+						chartData.datasets[0].data.shift();
+					}
+					if(nMinVSNR['second_min']['value']) {
+						document.getElementById('second_min').innerHTML = 'Second min - id: ' + nMinVSNR['second_min']['id'] + ' channel: ' + nMinVSNR['second_min']['channel'] + ' value: ' + nMinVSNR['second_min']['value'];
+						rawBreathData[1].push(nMinVSNR['second_min']['value']);
+						chartData.datasets[1].data = filter(rawBreathData[1]);
+						rawBreathData[1].shift();
+					} else {
+						document.getElementById('second_min').innerHTML = 'Second min - N/A';
+						chartData.datasets[1].data.push(null);
+						chartData.datasets[1].data.shift();
+					}
+					if(nMinVSNR['third_min']['value']) {
+						document.getElementById('third_min').innerHTML = 'Third min - id: ' + nMinVSNR['third_min']['id'] + ' channel: ' + nMinVSNR['third_min']['channel'] + ' value: ' + nMinVSNR['third_min']['value'];
+						rawBreathData[2].push(nMinVSNR['third_min']['value']);
+						chartData.datasets[2].data = filter(rawBreathData[2]);
+						rawBreathData[2].shift();
+					} else {
+						document.getElementById('third_min').innerHTML = 'Third min - N/A';
+						chartData.datasets[2].data.push(null);
+						chartData.datasets[2].data.shift();
+					}
+				} else {
+					document.getElementById('min').innerHTML = 'Min - N/A';
+					document.getElementById('second_min').innerHTML = 'Second min - N/A';
+					document.getElementById('third_min').innerHTML = 'Third min - N/A';
+					chartData.datasets[0].data.push(null);
+					chartData.datasets[1].data.push(null);
+					chartData.datasets[2].data.push(null);
+					chartData.datasets[0].data.shift();
+					chartData.datasets[1].data.shift();
+					chartData.datasets[2].data.shift();
+				}
+				updateRange();
+				randerChart();
+			}
+			var timer = setInterval(updateChartData, 200);
+
+			function start() {
+				timer = setInterval(updateChartData, 200);
+				document.getElementById("start").disabled = true;
+				document.getElementById("stop").disabled = false;
+			}
+
+			function stop() {
+				clearInterval(timer);
+				document.getElementById("start").disabled = false;
+				document.getElementById("stop").disabled = true;
+			}
+
+			var lastMin = Infinity, lastMax = 0;
+			function updateRange () {
+				var selectedIndex = document.getElementById('select_wave').selectedIndex;
+				var min = Infinity, max = 0;
+				for(var i = 0; i < chartData.datasets[selectedIndex].data.length; i++) {
+					if(chartData.datasets[selectedIndex].data[i] == null) continue;
+					else if(chartData.datasets[selectedIndex].data[i] > max) max = chartData.datasets[selectedIndex].data[i];
+					else if(chartData.datasets[selectedIndex].data[i] < min) min = chartData.datasets[selectedIndex].data[i];
+				}
+
+				if(min != Infinity && (min < lastMin || max > lastMax || (lastMax - lastMin) / (max - min) >= 1.5)) {
+					options.scaleStepWidth = Math.floor((max - min) / 15) + 1;
+					options.scaleStartValue =  Math.round(min - options.scaleStepWidth * 2.5);
+					lastMin = min;
+					lastMax = max;
+				}
+			}
+
+			function randerChart () {
+				Chart1.destroy();
+				Chart1 = new Chart(ctx).Line(chartData, options);
+			}
+		</script>
+	</body>
+</html>
