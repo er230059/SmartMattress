@@ -9,12 +9,7 @@
 	</head>
 	<body>
 		<a href="/">Homepage</a><br><br>
-		Select wave to view:
-		<select id="select_wave" onchange="updateRange();randerChart();">
-			<option >Min</option>
-			<option >Second Min</option>
-			<option >Third Min</option>
-		</select><br>
+		Adjust y-axis range: <input type="range" id="range1" value="3" min="1" max="5" step="1" onchange="updateRange(this)"><br>
 		<button id="start" type="button" onclick="start()">Start</button>
 		<button id="stop" type="button" onclick="stop()">Stop</button><br><br>
 		<span id="min">Min - N/A</span><br>
@@ -134,9 +129,9 @@
 				animation : false,
 				responsive: true,
 				scaleOverride : true,
-				scaleSteps : 25,
-				scaleStepWidth : 2640,
-				scaleStartValue : 0
+				scaleSteps : 20,
+				scaleStepWidth : 10,
+				scaleStartValue : -100
 			};
 			var Chart1 = new Chart(ctx).Line(chartData, options);
 
@@ -213,7 +208,6 @@
 					chartData.datasets[1].data.shift();
 					chartData.datasets[2].data.shift();
 				}
-				updateRange();
 				randerChart();
 			}
 			var timer = setInterval(updateChartData, 200);
@@ -230,22 +224,30 @@
 				document.getElementById("stop").disabled = true;
 			}
 
-			var lastMin = Infinity, lastMax = 0;
-			function updateRange () {
-				var selectedIndex = document.getElementById('select_wave').selectedIndex;
-				var min = Infinity, max = 0;
-				for(var i = 0; i < chartData.datasets[selectedIndex].data.length; i++) {
-					if(chartData.datasets[selectedIndex].data[i] == null) continue;
-					else if(chartData.datasets[selectedIndex].data[i] > max) max = chartData.datasets[selectedIndex].data[i];
-					else if(chartData.datasets[selectedIndex].data[i] < min) min = chartData.datasets[selectedIndex].data[i];
+			function updateRange (element) {
+				switch(element.value) {
+					case "1":
+						options.scaleStartValue = -500;
+						options.scaleStepWidth = 50;
+						break;
+					case "2":
+						options.scaleStartValue = -200;
+						options.scaleStepWidth = 20;
+						break;
+					case "3":
+						options.scaleStartValue = -100;
+						options.scaleStepWidth = 10;
+						break;
+					case "4":
+						options.scaleStartValue = -50;
+						options.scaleStepWidth = 5;
+						break;
+					case "5":
+						options.scaleStartValue = -10;
+						options.scaleStepWidth = 1;
+						break;
 				}
-
-				if(min != Infinity && (min < lastMin || max > lastMax || (lastMax - lastMin) / (max - min) >= 1.5)) {
-					options.scaleStepWidth = Math.floor((max - min) / 15) + 1;
-					options.scaleStartValue =  Math.round(min - options.scaleStepWidth * 2.5);
-					lastMin = min;
-					lastMax = max;
-				}
+				randerChart();
 			}
 
 			function randerChart () {
