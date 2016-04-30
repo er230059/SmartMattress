@@ -124,7 +124,7 @@
 
 			for (var i = 0; i < 3; i++) {
 				rawBreathData[i] = [];
-				for(var j = 0; j < 102; j++) {
+				for(var j = 0; j < 112; j++) {
 					rawBreathData[i].push(0);
 				}
 			}
@@ -166,7 +166,10 @@
 					if(nMinVSNR['min']['value']) {
 						document.getElementById('min').innerHTML = 'Min - id: ' + nMinVSNR['min']['id'] + ' channel: ' + nMinVSNR['min']['channel'] + ' value: ' + nMinVSNR['min']['value'];
 						rawBreathData[0].push(nMinVSNR['min']['value']);
-						chartData.datasets[0].data = filter(rawBreathData[0]);
+						var fiteredBreathData = filter(rawBreathData[0])
+						for(var i = 10; i < 111; i++) {
+							chartData.datasets[0].data[i - 10] = fiteredBreathData[i];
+						}
 						rawBreathData[0].shift();
 					} else {
 						document.getElementById('min').innerHTML = 'Min - N/A';
@@ -176,7 +179,10 @@
 					if(nMinVSNR['second_min']['value']) {
 						document.getElementById('second_min').innerHTML = 'Second min - id: ' + nMinVSNR['second_min']['id'] + ' channel: ' + nMinVSNR['second_min']['channel'] + ' value: ' + nMinVSNR['second_min']['value'];
 						rawBreathData[1].push(nMinVSNR['second_min']['value']);
-						chartData.datasets[1].data = filter(rawBreathData[1]);
+						var fiteredBreathData = filter(rawBreathData[1])
+						for(var i = 10; i < 111; i++) {
+							chartData.datasets[1].data[i - 10] = fiteredBreathData[i];
+						}
 						rawBreathData[1].shift();
 					} else {
 						document.getElementById('second_min').innerHTML = 'Second min - N/A';
@@ -186,7 +192,10 @@
 					if(nMinVSNR['third_min']['value']) {
 						document.getElementById('third_min').innerHTML = 'Third min - id: ' + nMinVSNR['third_min']['id'] + ' channel: ' + nMinVSNR['third_min']['channel'] + ' value: ' + nMinVSNR['third_min']['value'];
 						rawBreathData[2].push(nMinVSNR['third_min']['value']);
-						chartData.datasets[2].data = filter(rawBreathData[2]);
+						var fiteredBreathData = filter(rawBreathData[2])
+						for(var i = 10; i < 111; i++) {
+							chartData.datasets[2].data[i - 10] = fiteredBreathData[i];
+						}
 						rawBreathData[2].shift();
 					} else {
 						document.getElementById('third_min').innerHTML = 'Third min - N/A';
