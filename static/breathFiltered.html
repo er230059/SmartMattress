@@ -4,18 +4,27 @@
 		<style>
 			canvas {pointer-events: none;}
 			input {vertical-align:middle;}
+			#div0 {float:left; width:50%;}
+			#div1 {float:left; width:50%; font-size: 22px;}
 		</style>
 		<title>Breath Wave with Bandpass Filter</title>
 	</head>
 	<body>
 		<a href="/">Homepage</a><br><br>
 		Adjust y-axis range: <input type="range" id="range1" value="3" min="1" max="5" step="1" onchange="updateRange(this)"><br>
-		<button id="start" type="button" onclick="start()">Start</button>
-		<button id="stop" type="button" onclick="stop()">Stop</button><br><br>
-		<span id="min">Min - N/A</span><br>
-		<span id="second_min">Second min - N/A</span><br>
-		<span id="third_min">Third min - N/A</span><br><br>
+		<div id="div0">
+			<button id="start" type="button" onclick="start()">Start</button>
+			<button id="stop" type="button" onclick="stop()">Stop</button><br><br>
+			<span id="min">Min - N/A</span><br>
+			<span id="second_min">Second min - N/A</span><br>
+			<span id="third_min">Third min - N/A</span>
+		</div>
+		<div id="div1">
+			<br>Respiratory rate(breaths per minute):&nbsp<span id="rate">0</span><br><br>
+		</div>
+		<br><br>
 		<canvas id="canvas1" height="600" width="1800"></canvas><br>
+		Time/Div: 200ms<br>
 
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="/js/chart.js"></script>
@@ -211,6 +220,17 @@
 				randerChart();
 			}
 			var timer = setInterval(updateChartData, 200);
+
+			function updateRespiratoryRate() {
+				var rr = 0;
+				for (var i = 2; i <= 100; i++) {
+					if((chartData.datasets[0].data[i - 1] - chartData.datasets[0].data[i - 2] < 0) && (chartData.datasets[0].data[i] - chartData.datasets[0].data[i - 1] > 0)) {
+						rr += 1;
+					}
+				}
+				document.getElementById('rate').innerHTML = rr * 3;
+			}
+			setInterval(updateRespiratoryRate, 3000);
 
 			function start() {
 				timer = setInterval(updateChartData, 200);
