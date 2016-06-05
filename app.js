@@ -10,15 +10,15 @@ var i2c = require('i2c');
 const recordDataFolder = '/media/SD';
 
 app.set('view engine', 'jade');
+app.set('views', __dirname + '/views');
+app.use(express.static(__dirname + '/static'));
+app.use('/record_data', express.static('/media/SD'));
 
 app.use(function (req, res, next) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     console.log(ip + ': '+ req.url);
     next();
 });
-
-app.use(express.static(__dirname + '/static'));
-app.use('/record_data', express.static('/media/SD'));
 
 app.get('/getRecordData', function (req, res) {
     fs.readdir(recordDataFolder, function (err, data) {
