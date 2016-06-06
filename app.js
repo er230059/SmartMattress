@@ -1,3 +1,4 @@
+require('console-stamp')(console, '[HH:MM:ss.l]');
 var fs = require('fs');
 var http = require('http');
 var express = require('express');
@@ -92,7 +93,7 @@ io.on('connection', function (socket) {
 
 setInterval(function () {
     var i = 0;
-    var datas = [];
+    var dataGroup = [];
     async.whilst(
         function () {
             return i < device.length;
@@ -102,17 +103,20 @@ setInterval(function () {
             i++;
             device[index].write([0x78, 0x05, 0x00, 0x00, 0x00, 0x44, 0xc1], function (err) {
                 if(err) {
-                    console.log(err);
+                    console.error(err);
                     callback(null);
                 } else {
                     device[index].read(0x50, function (err, res) {
                         if(err) {
-                            console.log(err);
+                            console.error(err);
                             callback(null);
                         } else {
                             var data = formatData(index, res);
                             if(data) {
-                                datas.push(data);
+                                dataGroup.push(data);
+                            } else {
+                                var err = new Error("Data header incorrect");
+                                console.error(err);
                             }
                             callback(null);
                         }
@@ -125,40 +129,27 @@ setInterval(function () {
                 console.log(err);
             } else {
                 if(record) {
-                    var writeString = '';
-                    for(var i = 0; i < datas.length; i++) {
-                        writeString += datas[i].id + ':\n';
-                        var data = '', status = '';
-                        for(var j = 0; j < datas[i].data.length; j++) {
-                            data += datas[i].data[j] + ' ';
-                            status += datas[i].status[j] + ' ';
+                    if(device.length == dataGroup.length) {
+                        var writeString = '';
+                        for(var i = 0; i < dataGroup.length; i++) {
+                            writeString += dataGroup[i].id + ':\n';
+                            var data = '', status = '';
+                            for(var j = 0; j < dataGroup[i].data.length; j++) {
+                                data += dataGroup[i].data[j] + ' ';
+                                status += dataGroup[i].status[j] + ' ';
+                            }
+                            writeString += data + '\n' + status + '\n\n';
                         }
-                        writeString += data + '\n' + status + '\n\n';
+                        writeString += 'Timestamp: ' + Date.now() + '\n\n==========================================\n';
+                        fs.appendFileSync(recordDataPath, writeString);
+                    } else {
+                        var err = new Error("Data length not match, not record");
+                        console.error(err);
                     }
-                    writeString += 'Timestamp: ' + Date.now() + '\n\n==========================================\n';
-                    fs.appendFileSync(recordDataPath, writeString);
                 }
-                var stringifyDatas = JSON.stringify(datas);
-                io.emit('update', stringifyDatas);
 
-                /*var options = {
-                    hostname: "140.128.86.88",
-                    port: 8080,
-                    path: "/addData",
-                    method: "POST",
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                };
-                var req = http.request(options, function(res) {
-                    res.on('data', function (data) {
-                    });
-                });
-                req.on('error', function(e) {
-                    console.log(e.message);
-                });
-                req.write(stringifyDatas);
-                req.end();*/
+                var stringifyData = JSON.stringify(dataGroup);
+                io.emit('update', stringifyData);
             }
         }
     );

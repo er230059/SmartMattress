@@ -4,6 +4,7 @@
 	"description": "SmartMattress application layer system",
 	"engines" : { "node" : ">=0.10 <0.12" },
 	"dependencies": {
+		"console-stamp": "*",
 		"express": "*",
 		"socket.io": "*",
 		"jade": "*",
