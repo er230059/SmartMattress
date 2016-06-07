@@ -1,4 +1,4 @@
-require('console-stamp')(console, '[HH:MM:ss.l]');
+require('console-stamp')(console, '[dd/mm/yyyy HH:MM:ss.l]');
 var fs = require('fs');
 var http = require('http');
 var express = require('express');
