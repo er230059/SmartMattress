@@ -318,7 +318,7 @@
 					for(var j = 0; j < vsnr[i].length; j++){
 						var id = i.toString() + (("0" + j.toString()).slice(-2));
 						if(vsnr[i][j] == Infinity) {
-							document.getElementById(id).innerHTML = "---";
+							document.getElementById(id).innerHTML = "--";
 							document.getElementById(id).style.backgroundColor = "#BFBFBF";
 						} else {
 							document.getElementById(id).innerHTML = (("0" + vsnr[i][j].toString()).slice(-2));
