@@ -319,17 +319,17 @@
 						var id = i.toString() + (("0" + j.toString()).slice(-2));
 						if(vsnr[i][j] == Infinity) {
 							document.getElementById(id).innerHTML = "---";
-							document.getElementById(id).style.backgroundColor = "#E65C00";
+							document.getElementById(id).style.backgroundColor = "#BFBFBF";
 						} else {
 							document.getElementById(id).innerHTML = (("0" + vsnr[i][j].toString()).slice(-2));
 							if(i == nMinVSNR['min']['id'] && j == nMinVSNR['min']['channel']) {
-								document.getElementById(id).style.backgroundColor = "#FF7878";
+								document.getElementById(id).style.backgroundColor = "#FF3333";
 							}
 							else if(i == nMinVSNR['second_min']['id'] && j == nMinVSNR['second_min']['channel']) {
-								document.getElementById(id).style.backgroundColor = "#A0C878";
+								document.getElementById(id).style.backgroundColor = "#80B54A";
 							}
 							else if(i == nMinVSNR['third_min']['id'] && j == nMinVSNR['third_min']['channel']) {
-								document.getElementById(id).style.backgroundColor = "#78C8DC";
+								document.getElementById(id).style.backgroundColor = "#34ADCB";
 							}
 							else {
 								document.getElementById(id).style.backgroundColor = "white";
