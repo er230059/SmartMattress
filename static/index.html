@@ -33,6 +33,7 @@
 				float: left;
 				width: 25%;
 				margin-top: 24px;
+				font-size: 18px;
 			}
 		</style>
 		<title>Smart Mattress</title>
@@ -56,17 +57,10 @@
 							id0 = "0" + id0;
 						}
 						var id = id1.toString() + id0.toString();
-						document.write("<span id=\"" + id + "\">&nbsp&nbsp&nbsp&nbsp&nbsp</span>&nbsp");
+						document.write("<span id=\"" + id + "\">&nbsp&nbsp&nbsp&nbsp</span>&nbsp");
 						document.getElementById(id).style.backgroundColor = "#FFD1B3";
-
-						if(j == 7) {
-							document.write("&nbsp&nbsp&nbsp");
-						}
 					}
 					document.write("<br>");
-					if((i - 3) % 4 == 0) {
-						document.write("<br><br>");
-					}
 				}
 			</script>
 		</div>

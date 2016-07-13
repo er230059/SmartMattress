@@ -53,16 +53,9 @@
 							id0 = "0" + id0;
 						}
 						var id = id1.toString() + id0.toString();
-						document.write("<span id=\"" + id + "\">000</span>&nbsp");
-
-						if(j == 7) {
-							document.write("&nbsp&nbsp&nbsp");
-						}
+						document.write("<span id=\"" + id + "\">00</span>&nbsp");
 					}
 					document.write("<br>");
-					if((i - 3) % 4 == 0) {
-						document.write("<br>");
-					}
 				}
 			</script>
 		</div>
@@ -328,7 +321,7 @@
 							document.getElementById(id).innerHTML = "---";
 							document.getElementById(id).style.backgroundColor = "#E65C00";
 						} else {
-							document.getElementById(id).innerHTML = (("00" + vsnr[i][j].toString()).slice(-3));
+							document.getElementById(id).innerHTML = (("0" + vsnr[i][j].toString()).slice(-2));
 							if(i == nMinVSNR['min']['id'] && j == nMinVSNR['min']['channel']) {
 								document.getElementById(id).style.backgroundColor = "#FF7878";
 							}
