@@ -83,11 +83,11 @@ io.on('connection', function (socket) {
         } else if(json.cmd == 'stop_record') {
             record = false;
         }
-        io.emit('recoed_state', JSON.stringify({'state': record}));
+        io.emit('record_state', JSON.stringify({'state': record}));
     });
 
-    socket.on('get_recoed_state', function(data) {
-      io.emit('recoed_state', JSON.stringify({'state': record}));
+    socket.on('get_record_state', function(data) {
+      io.emit('record_state', JSON.stringify({'state': record}));
     });
 });
 

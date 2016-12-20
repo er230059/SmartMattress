@@ -47,7 +47,7 @@
 				socket.emit('cmd', JSON.stringify(cmd));
 			}
 
-			socket.on('recoed_state', function (data) {
+			socket.on('record_state', function (data) {
 				var json = JSON.parse(data);
 				if(json.state) {
 					document.getElementById("start").disabled = true;
@@ -57,7 +57,7 @@
 					document.getElementById("stop").disabled = true;
 				}
 			});
-			socket.emit('get_recoed_state', '');
+			socket.emit('get_record_state', '');
 
 			socket.on('update', function (data) {
 				var json = JSON.parse(data);

@@ -87,7 +87,7 @@
 				recordButton_updateState();
 			}
 
-			socket.on('recoed_state', function (data) {
+			socket.on('record_state', function (data) {
 				var json = JSON.parse(data);
 				record = json.state;
 				recordButton_updateState();
@@ -103,7 +103,7 @@
 				}
 			});
 
-			socket.emit('get_recoed_state', '');
+			socket.emit('get_record_state', '');
 		</script>
 	</body>
 </html>
