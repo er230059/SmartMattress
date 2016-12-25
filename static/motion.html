@@ -5,9 +5,6 @@
 			.homepage {
 				font-size: 26px;
 			}
-			canvas {
-				pointer-events: none;
-			}
 			input {
 				vertical-align: middle;
 			}
@@ -35,28 +32,27 @@
 				datasets : [
 					{
 						label: "nPressed",
-						fillColor : "rgba(100,120,180,0.2)",
-						strokeColor : "rgba(100,120,180,1)",
-						pointColor : "rgba(100,120,180,1)",
-						pointStrokeColor : "rgba(255,255,255,1)",
+						fill: false,
+						spanGaps: true,
+						backgroundColor: "rgba(100,120,180,0.2)",
+						borderColor: "rgba(100,120,180,1)",
+						pointRadius: 0,
 						data : []
 					}
 				]
-
 			}
 			var chartData2 = {
 				labels : [],
 				datasets : [
 					{
 						label: "cnPressed",
-						fillColor : "rgba(120,200,130,0.2)",
-						strokeColor : "rgba(120,200,130,1)",
-						pointColor : "rgba(120,200,130,1)",
-						pointStrokeColor : "rgba(255,255,255,1)",
+						fill: false,
+						backgroundColor: "rgba(120,200,130,0.2)",
+						borderColor: "rgba(120,200,130,1)",
+						pointRadius: 0,
 						data : []
 					}
 				]
-
 			}
 
 			for (var i = 0; i <= 100; i++) {
@@ -68,25 +64,21 @@
 
 			var ctx1 = document.getElementById("canvas1").getContext("2d");
 			var ctx2 = document.getElementById("canvas2").getContext("2d");
-			var options1 = {
-				animation : false,
-				responsive: true,
-				scaleOverride : true,
-				scaleSteps : 10,
-				scaleStepWidth : 10,
-				scaleStartValue : 0
-			};
-			var options2 = {
-				animation : false,
-				responsive: true,
-				scaleOverride : true,
-				scaleSteps : 10,
-				scaleStepWidth : 10,
-				scaleStartValue : -50
-			};
 
-			var Chart1 = new Chart(ctx1).Line(chartData1, options1);
-			var Chart2 = new Chart(ctx2).Line(chartData1, options2);
+			var Chart1 = new Chart(ctx1, {
+				type: "line",
+				data: chartData1,
+				options: {
+					animation: false
+				}
+			});
+			var Chart2 = new Chart(ctx2, {
+				type: "line",
+				data: chartData2,
+				options: {
+					animation: false
+				}
+			});
 
 			function updateChart() {
 				var cnPressed = (nPressed - lnPressed);
@@ -95,42 +87,10 @@
 				chartData1.datasets[0].data.shift();
 				chartData2.datasets[0].data.push(cnPressed);
 				chartData2.datasets[0].data.shift();
-				Chart1.destroy();
-				Chart2.destroy();
-				Chart1 = new Chart(ctx1).Line(chartData1, options1);
-				Chart2 = new Chart(ctx2).Line(chartData2, options2);
+				Chart1.update();
+				Chart2.update();
 			}
 			setInterval(updateChart, 200);
-
-			function updateRange () {
-				var max, min;
-				max = Math.max.apply(null, chartData1.datasets[0].data);
-				if(max > 200) {
-					options1.scaleStepWidth = 25;
-				} else if (max > 100) {
-					options1.scaleStepWidth = 20;
-				} else {
-					options1.scaleStepWidth = 10;
-				}
-
-				max = Math.max.apply(null, chartData2.datasets[0].data);
-				min = Math.min.apply(null, chartData2.datasets[0].data);
-
-				if(max > 250 || min < -250) {
-					options2.scaleStepWidth = 100;
-					options2.scaleStartValue = -500
-				} else if (max > 100 || min < -100) {
-					options2.scaleStepWidth = 25;
-					options2.scaleStartValue = -250
-				} else if (max > 50 || min < -50) {
-					options2.scaleStepWidth = 20;
-					options2.scaleStartValue = -100
-				} else {
-					options2.scaleStepWidth = 10;
-					options2.scaleStartValue = -50
-				}
-			}
-			setInterval(updateRange, 3000);
 
 			var socket = io();
 			socket.on('update', function (data) {

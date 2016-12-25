@@ -14,9 +14,6 @@
 				display: inline-block;
 				font-size: 24px;
 			}
-			canvas {
-				pointer-events: none;
-			}
 			input {
 				vertical-align: middle;
 			}
@@ -71,6 +68,7 @@
 				}
 			</script>
 		</div>
+		<br>
 		<canvas id="canvas1" height="400" width="1800"></canvas>
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="/js/chart.js"></script>
@@ -140,30 +138,32 @@
 				datasets : [
 					{
 						label: "min",
-						fillColor : "rgba(220,120,120,0.2)",
-						strokeColor : "rgba(220,120,120,1)",
-						pointColor : "rgba(220,120,120,1)",
-						pointStrokeColor : "rgba(255,255,255,1)",
+						fill: false,
+						spanGaps: true,
+						backgroundColor: "rgba(220,120,120,0.2)",
+						borderColor: "rgba(220,120,120,1)",
+						pointRadius: 0,
 						data : []
 					},
 					{
 						label: "second_min",
-						fillColor : "rgba(160,200,120,0.2)",
-						strokeColor : "rgba(160,200,120,1)",
-						pointColor : "rgba(160,200,120,1)",
-						pointStrokeColor : "rgba(255,255,255,1)",
+						fill: false,
+						spanGaps: true,
+						backgroundColor: "rgba(160,200,120,0.2)",
+						borderColor: "rgba(160,200,120,1)",
+						pointRadius: 0,
 						data : []
 					},
 					{
 						label: "third_min",
-						fillColor : "rgba(120,200,220,0.2)",
-						strokeColor : "rgba(120,200,220,1)",
-						pointColor : "rgba(120,200,220,1)",
-						pointStrokeColor : "rgba(255,255,255,1)",
+						fill: false,
+						spanGaps: true,
+						backgroundColor: "rgba(120,200,220,0.2)",
+						borderColor: "rgba(120,200,220,1)",
+						pointRadius: 0,
 						data : []
 					}
 				]
-
 			}
 			for (var i = 0; i <= 100; i++) {
 				chartData.labels.push('');
@@ -180,15 +180,24 @@
 			}
 
 			var ctx = document.getElementById("canvas1").getContext("2d");
-			var options = {
-				animation : false,
-				responsive: true,
-				scaleOverride : true,
-				scaleSteps : 20,
-				scaleStepWidth : 10,
-				scaleStartValue : -100
-			};
-			var Chart1 = new Chart(ctx).Line(chartData, options);
+			Chart.defaults.global.defaultFontSize = 14;
+
+			var Chart1 = new Chart(ctx, {
+				type: "line",
+				data: chartData,
+				options: {
+					animation: false,
+					scales: {
+						yAxes: [{
+							ticks: {
+								max: 100,
+								min: -100,
+								stepSize: 10
+							}
+						}]
+					}
+				}
+			});
 
 			function updateChartData() {
 				lnMinVSNR = nMinVSNR;
@@ -263,8 +272,8 @@
 					chartData.datasets[1].data.shift();
 					chartData.datasets[2].data.shift();
 				}
-				randerChart();
-				renderVSNR();
+				Chart1.update();
+				displayVSNR();
 			}
 			var timer = setInterval(updateChartData, 200);
 
@@ -297,35 +306,35 @@
 			function updateRange (element) {
 				switch(element.value) {
 					case "1":
-						options.scaleStartValue = -500;
-						options.scaleStepWidth = 50;
+						Chart1.options.scales.yAxes[0].ticks.max = 500 ;
+						Chart1.options.scales.yAxes[0].ticks.min =  -500;
+						Chart1.options.scales.yAxes[0].ticks.stepSize = 50;
 						break;
 					case "2":
-						options.scaleStartValue = -200;
-						options.scaleStepWidth = 20;
+						Chart1.options.scales.yAxes[0].ticks.max = 200 ;
+						Chart1.options.scales.yAxes[0].ticks.min =  -200;
+						Chart1.options.scales.yAxes[0].ticks.stepSize = 20;
 						break;
 					case "3":
-						options.scaleStartValue = -100;
-						options.scaleStepWidth = 10;
+						Chart1.options.scales.yAxes[0].ticks.max = 100 ;
+						Chart1.options.scales.yAxes[0].ticks.min =  -100;
+						Chart1.options.scales.yAxes[0].ticks.stepSize = 10;
 						break;
 					case "4":
-						options.scaleStartValue = -50;
-						options.scaleStepWidth = 5;
+						Chart1.options.scales.yAxes[0].ticks.max = 50 ;
+						Chart1.options.scales.yAxes[0].ticks.min =  -50;
+						Chart1.options.scales.yAxes[0].ticks.stepSize = 5;
 						break;
 					case "5":
-						options.scaleStartValue = -10;
-						options.scaleStepWidth = 1;
+						Chart1.options.scales.yAxes[0].ticks.max = 10 ;
+						Chart1.options.scales.yAxes[0].ticks.min =  -10;
+						Chart1.options.scales.yAxes[0].ticks.stepSize = 1;
 						break;
 				}
-				randerChart();
+				Chart1.update();
 			}
 
-			function randerChart () {
-				Chart1.destroy();
-				Chart1 = new Chart(ctx).Line(chartData, options);
-			}
-
-			function renderVSNR () {
+			function displayVSNR () {
 				for(var i in vsnr) {
 					for(var j = 0; j < vsnr[i].length; j++){
 						var id = i.toString() + (("0" + j.toString()).slice(-2));
